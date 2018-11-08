@@ -64,13 +64,30 @@
 			
 			// 给上传按钮绑定触摸事件
 			document.getElementById("uploadBtn").addEventListener("tap",function(){
-				var croppedImageBase64 = cropper.getCroppedCanvas().toDataURL('image/jpeg');
 				cropper.getCroppedCanvas().toBlob(function(blob){
 					console.log(blob);
+					// 获取用户编号
+					var user = app.getUserGlobalInfo();
+					
+					var formData = new FormData();
+					// 获取当前时间,并编为文件名
+					var imgFilename = new Date().getTime() +".png";
+  					formData.append('faceImage', blob, imgFilename);
+  					
+  					console.log(formData);
+  					console.log(JSON.stringify(formData))
+  					// 调用ajax上传用户头像
+  					mui.ajax(app.serverUrl + "/user/" + user.id + "/faceImage",{
+						data:formData,
+						type:'post',     
+						processData:false,
+						contentType:false,
+						success:function(data){
+							//服务器返回响应，根据响应结果，分析是否登录成功；
+							console.log(JSON.stringify(data))
+						}
+					});
 				});
-				// 调用ajax上传用户头像
-				
-				console.log(croppedImageBase64);
 			});
 			
 			function initCropper(){
