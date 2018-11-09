@@ -39,7 +39,7 @@
 		
 		<div class="outer-box mui-fullscreen">
 			<div class="holdcenter">
-				<img id="myface_img" src="../../css/registLogin/arrow.jpg"/>
+				<img id="myface_img" src=""/>
 			</div>
 		</div>
 		
@@ -70,9 +70,66 @@
 			mui.plusReady(function(){
       			// 设置系统状态栏背景颜色
       			plus.navigator.setStatusBarBackground("#000");
+      			
+      			refreshFace();
+      			
+      			// 添加自定义事件,刷新头像
+				window.addEventListener("refresh", function(){
+					refreshFace();
+				})
+			});
+							
+			// 点击菜单
+			var openMenu = document.getElementById("openMenu");
+			openMenu.addEventListener("tap", function(e){
+				mui("#sheet-myface").popover("toggle");
+			});
+				
+			// 选择照片绑定事件
+			var link_choosePhoto = document.getElementById("link_choosePhoto");
+			link_choosePhoto.addEventListener("tap", function(e){
+				mui.openWindow({
+					url: "face_img_uploader.html",
+					id: "face_img_uploader.html",
+					createNew: true});
+				mui("#sheet-myface").popover("toggle");
+			});
+				
+			// 下载照片绑定事件
+			var link_downloadPhoto = document.getElementById("link_downloadPhoto");
+			link_downloadPhoto.addEventListener("tap", function(e){
+				plus.nativeUI.showWaiting("下载中...");
+				
+				var userInfo = app.getUserGlobalInfo();
+				var faceImage = userInfo.faceImageBig;
+				
+				// 新建下载任务
+				var downloadTask = plus.downloader.createDownload(
+					app.imgserverUrl + faceImage,
+					{},
+					function(downloadFile, status){
+						plus.nativeUI.closeWaiting();
+						
+						if(status == 200){
+							var tempFile = downloadFile.filename;
+							// 通过相册api保存照片
+							plus.gallery.save(tempFile,function(){
+								app.showToast("下载成功");
+							})
+						} else{
+							app.showToast("下载失败");
+						}
+					}
+				);
+				downloadTask.start();
+				
+//				alert("下载照片");
+			});
+			
+			function refreshFace(){
 				var userInfo = app.getUserGlobalInfo();
 				if(userInfo != null){
-					var faceImage = userInfo.faceImage;
+					var faceImage = userInfo.faceImageBig;
 					var faceImageOutput = document.getElementById("myface_img");
 					if(app.isNotEmpty(faceImage)){
 						faceImageOutput.src = app.imgserverUrl + faceImage;
@@ -84,26 +141,7 @@
 					faceImageOutput.width = imgWidth;
 					faceImageOutput.height = imgWidth;
 				}
-			});
-							
-			// 点击菜单
-			var openMenu = document.getElementById("openMenu");
-			openMenu.addEventListener("tap", function(e){
-				mui("#sheet-myface").popover("toggle");
-			});
-				
-			// 选择照片绑定事件
-			var link_choosePhoto = document.getElementById("link_choosePhoto");
-			link_choosePhoto.addEventListener("tap",function(e){
-				mui.openWindow("face_img_uploader.html","face_img_uploader.html");
-				mui("#sheet-myface").popover("toggle");
-			});
-				
-			// 下载照片绑定事件
-			var link_downloadPhoto = document.getElementById("link_downloadPhoto");
-			link_downloadPhoto.addEventListener("tap",function(e){
-				alert("下载照片");
-			});
+			}
 		</script>
 	</body>
 

@@ -64,27 +64,47 @@
 			
 			// 给上传按钮绑定触摸事件
 			document.getElementById("uploadBtn").addEventListener("tap",function(){
+				plus.nativeUI.showWaiting("上传中...");
+				
 				cropper.getCroppedCanvas().toBlob(function(blob){
-					console.log(blob);
-					// 获取用户编号
-					var user = app.getUserGlobalInfo();
-					
 					var formData = new FormData();
 					// 获取当前时间,并编为文件名
 					var imgFilename = new Date().getTime() +".png";
   					formData.append('faceImage', blob, imgFilename);
   					
-  					console.log(formData);
-  					console.log(JSON.stringify(formData))
+					// 获取全局用户对象
+					var user = app.getUserGlobalInfo();
+					var token = app.getUserGlobalToken();
+
   					// 调用ajax上传用户头像
   					mui.ajax(app.serverUrl + "/user/" + user.id + "/faceImage",{
+						type:'put', 
 						data:formData,
-						type:'post',     
+						headers:{
+							'X_USER_TOKEN' : token
+						},
 						processData:false,
 						contentType:false,
-						success:function(data){
-							//服务器返回响应，根据响应结果，分析是否登录成功；
-							console.log(JSON.stringify(data))
+						success: function(data){
+							// 获取到响应关闭等待窗口
+							plus.nativeUI.closeWaiting();
+							
+							// 服务器返回响应，根据响应结果，分析是否登录成功
+							if(data.code == app.dataStatus.success){
+								// 更新本地缓存
+								app.setUserGlobalInfo(data.data);
+								
+								// 获取跳转页面的webview对象,触发自定义事件
+								var chat_me_Webview = plus.webview.getWebviewById("chat-me.html");
+								mui.fire(chat_me_Webview, "refresh");
+								var myface_Webview = plus.webview.getWebviewById("myface.html");
+								mui.fire(myface_Webview, "refresh");
+								
+								// 页面跳转
+								mui.openWindow({url: "index.html",id: "index.html"});
+							}else{
+								app.showToast(data.info);
+							}
 						}
 					});
 				});
@@ -122,7 +142,7 @@
 			 */
 			function canvasDataURL(pathUrl, options, resultCallback){
 				// 显示稍等
-				plus.nativeUI.showWaiting( "请稍等..." );
+				plus.nativeUI.showWaiting( "加载中请稍等..." );
 				
 				var imgage = new Image();
 				imgage.src = pathUrl;

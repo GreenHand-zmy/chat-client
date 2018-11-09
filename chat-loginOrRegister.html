@@ -77,12 +77,12 @@
 		<script type="text/javascript" src="js/app.js" ></script>
 		<script type="text/javascript">
 			mui.plusReady(function(){
-				// 判断用户是否注册登录过,如果本地内存有全局的用户对象,此时直接跳转到首页
-				var userInfo = app.getUserGlobalInfo();
-				if(userInfo != null){
-					// 页面跳转
+				// 判断用户是否注册登录过,如果本地内存有全局token,此时直接跳转到首页
+				var token = app.getUserGlobalToken();
+				if(app.isNotEmpty(token)){
 					mui.openWindow({url: "index.html",id: "index.html"});
 				}
+				
 				// 获取提交表单
 				var userForm = document.getElementById("userForm");
 				// 获取用户名
@@ -92,49 +92,36 @@
 				
 				// 给表单绑定事件
 				userForm.addEventListener("submit", function(e){
-					// 判断用户名是否为空
-					if(!app.isNotEmpty(usernameInput.value)){
-						app.showToast("用户名不能为空");
-						return false;
-					}else if(!app.isNotEmpty(passwordInput.value)){
-						app.showToast("密码不能为空");
-						return false;
-					}else{
-						// 都不为空判断是否符合后端要求
-						if (!usernameInput.value.match('[a-zA-Z_-]{4,20}')) {
-							app.showToast("用户名只能包含字母、数字、下划线,长度为4-20");
-							return false;
-						}else if(!passwordInput.value.match('[a-zA-z0-9]{6,20}')){
-							app.showToast("密码只能包含字母和数字,长度为6-20");
-							return false;
-						}
-					}
+					// 表单字段校验
+					vaildForm(usernameInput.value, passwordInput.value);
+					
+					// 显示稍等
+					plus.nativeUI.showWaiting( "请稍等..." );
 					
 					// 获取每台手机唯一的cid
 					var clientId = plus.push.getClientInfo().clientid;
+					
 					// ajax访问登录接口
 					mui.ajax(app.serverUrl + "/user/registerOrLogin",{
+						type: 'post',
 						data:{
 							username: usernameInput.value,
 							password: passwordInput.value,
 							clientId: clientId
 						},
-						dataType:'json',//服务器返回json格式数据
-						type:'post',//HTTP请求类型
-						timeout:10000,//超时时间设置为10秒；	              
-						success:function(data){
-							console.log(app.dataStatus.success);
-							//服务器返回响应，根据响应结果，分析是否登录成功；
+						success: function(data){
+							// 收到服务器响应,关闭等待框
+							plus.nativeUI.closeWaiting();
+							//服务器返回响应，根据响应结果，分析是否登录成功
 							if(data.code == app.dataStatus.success){
-								console.log(JSON.stringify(data.data));
 								// 存入缓存中
 								var userInfoJson = data.data;
+								app.setUserGlobalToken(userInfoJson.token);
 								app.setUserGlobalInfo(userInfoJson);
-								
 								// 页面跳转
 								mui.openWindow({url: "index.html",id: "index.html"});
 							}else {
-								app.showToast(data.info)
+								app.showToast(data.info);
 							}
 						},
 						error:function(xhr,type,errorThrown){
@@ -142,11 +129,30 @@
 							console.log(type);
 						}
 					});
-					
-					// 阻止默认提交事件
-					e.preventDefault()
-				});
+						
+						// 阻止默认提交事件
+						e.preventDefault()
+					});
 			});
+			
+			function vaildForm(username, password){
+				if(!app.isNotEmpty(username)){
+						app.showToast("用户名不能为空");
+						return false;
+				}else if(!app.isNotEmpty(password)){
+					app.showToast("密码不能为空");
+					return false;
+				}else{
+					// 都不为空判断是否符合后端要求
+					if (!username.match('[a-zA-Z_-]{4,20}')) {
+						app.showToast("用户名只能包含字母、数字、下划线,长度为4-20");
+						return false;
+					}else if(!password.match('[a-zA-z0-9]{6,20}')){
+						app.showToast("密码只能包含字母和数字,长度为6-20");
+						return false;
+					}
+				}
+			}
 		</script>
 
 	</body>
