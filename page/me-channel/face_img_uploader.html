@@ -83,8 +83,9 @@
 						headers:{
 							'X_USER_TOKEN' : token
 						},
-						processData:false,
-						contentType:false,
+						processData: false,
+						contentType: false,
+						timeout: app.globalTimeout,
 						success: function(data){
 							// 获取到响应关闭等待窗口
 							plus.nativeUI.closeWaiting();
@@ -96,14 +97,21 @@
 								
 								// 获取跳转页面的webview对象,触发自定义事件
 								var chat_me_Webview = plus.webview.getWebviewById("chat-me.html");
-								mui.fire(chat_me_Webview, "refresh");
+								mui.fire(chat_me_Webview, "refreshUserInfo");
 								var myface_Webview = plus.webview.getWebviewById("myface.html");
-								mui.fire(myface_Webview, "refresh");
+								mui.fire(myface_Webview, "refreshFace");
 								
 								// 页面跳转
 								mui.openWindow({url: "index.html",id: "index.html"});
 							}else{
 								app.showToast(data.info);
+							}
+						},
+						error: function(xhr,type,errorThrown){
+							plus.nativeUI.closeWaiting();
+							//异常处理；
+							if(type == 'timeout'){
+								app.showToast("连接服务器超时,请稍后再试");
 							}
 						}
 					});

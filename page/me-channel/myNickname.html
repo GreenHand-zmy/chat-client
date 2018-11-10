@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css"/>
+		<link rel="stylesheet" type="text/css" href="../../css/header.css"/>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav bar">
+		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: white;"></a>
+		  	<a id="submitBtn" class="mui-icon mui-icon-right-nav mui-pull-right font" style="color: white;line-height: 25px;">完成</a>
+		</header>
+		
+		<div class="mui-content">
+		    <div class="mui-input-row">
+			    <input id="nickname" type="text" class="mui-input-speech mui-input-clear" 
+			    	placeholder="修改昵称">
+			</div>
+		</div>
+		
+		
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js"></script>
+		<script type="text/javascript">
+			
+			mui.init();
+			
+			mui.plusReady(function(){
+				// 加载用户原始昵称
+				loadNickname(document.getElementById("nickname"));
+				
+				// 获取提交dom,并创建事件监听
+				var submitBtn = document.getElementById("submitBtn");
+				submitBtn.addEventListener("tap", function(e){
+					var nickname = document.getElementById("nickname").value;
+					
+					// 校验
+					var isValid = valid(nickname);
+					if(!isValid){
+						app.showToast("昵称不能为空");
+						return;
+					}
+					
+					// 显示稍等
+					plus.nativeUI.showWaiting("请稍等...");
+					
+					// 校验通过调用ajax
+					var userInfo = app.getUserGlobalInfo();
+					mui.ajax(app.serverUrl + "/user/" + userInfo.id, {
+						type: 'put',
+						data: {
+							nickname: nickname
+						},
+						timeout: app.globalTimeout,
+						success: function(data) {
+							// 收到服务器响应,关闭等待框
+							plus.nativeUI.closeWaiting();
+							//服务器返回响应，根据响应结果，分析是否登录成功
+							if(data.code == app.dataStatus.success) {
+								// 存入缓存中
+								var userInfoJson = data.data;
+								app.setUserGlobalInfo(userInfoJson);
+								
+								// 获取chat-me webview对象,触发重新加载用户信息事件
+								var chatMeWebview =  plus.webview.getWebviewById("chat-me.html");
+								mui.fire(chatMeWebview, "refreshUserInfo");
+								
+								// 页面跳转
+								mui.openWindow({
+									url: "index.html",
+									id: "index.html"
+								});
+							} else {
+								app.showToast(data.info);
+							}
+						},
+						error: function(xhr, type, errorThrown) {
+							//异常处理；
+							plus.nativeUI.closeWaiting();
+							//异常处理；
+							if(type == 'timeout') {
+								app.showToast("连接服务器超时,请稍后再试");
+							}
+						}
+					});
+				});
+			});
+			
+			function valid(nickname){
+				if(!app.isNotEmpty(nickname)){
+					return false;
+				}
+				return true;
+			}
+			
+			function loadNickname(nicknameInput){
+				var userInfo = app.getUserGlobalInfo();
+				nicknameInput.value = userInfo.nickname;
+			}
+		</script>
+	</body>
+
+</html>
