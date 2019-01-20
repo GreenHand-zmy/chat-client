@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			#scanComponent {
+				width: 100%;
+				top: 44px;
+				bottom: 0px;
+				position: absolute;
+				text-align: center;
+				background-color: #000000;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-pull-left mui-title">扫一扫</h1>
+		</header>
+
+		<div class="mui-content">
+			<div id="scanComponent">
+
+			</div>
+		</div>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../../js/search-friend.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			mui.init();
+
+			mui.plusReady(function() {
+
+				setTimeout(startScan(), 200);
+			});
+
+			var scan;
+
+			function startScan() {
+				const styles = {
+					frameColor: "#128E12",
+					scanbarColor: "0062CC",
+					background: "",
+				}
+				scan = new plus.barcode.Barcode('scanComponent', null, styles);
+				scan.onmarked = onmarked;
+				scan.start();
+			}
+
+			function onmarked(type, result) {
+				if(type === 0) {
+					// 解析二维码内容
+					const qrContent = JSON.parse(result);
+
+					// 生成查询参数
+					const query = {
+						'userId': qrContent.userId
+					};
+					search(query, (result) => {
+						// 页面跳转,并传递搜索结果
+						mui.openWindow({
+							url: "search-friend-result.html",
+							id: "search-friend-result.html",
+							extras: {
+								friendInfo: result
+							}
+						});
+					});
+
+					scan.start();
+				}
+			}
+		</script>
+	</body>
+
+</html>

@@ -107,11 +107,10 @@
 				var link_logout = document.getElementById("logout");
 				link_logout.addEventListener("tap", function(e){
 					// 清空本地缓存
-					app.removeUserGlobalToken();
-					app.removeUserGlobalInfo();
+					app.clearStorage();
 					
 					// 跳转到登录界面
-					mui.openWindow("chat-loginOrRegister.html","../../chat-loginOrRegister.html");
+					mui.openWindow("../../chat-loginOrRegister.html","chat-loginOrRegister.html");
 				});
 			});
 			

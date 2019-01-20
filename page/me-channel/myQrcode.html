@@ -7,58 +7,97 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css"/>
 		<link rel="stylesheet" type="text/css" href="../../css/header.css"/>
+		<link rel="stylesheet" type="text/css" href="../../font_icon/iconfont.css"/>
 		<style type="text/css">
-			.outer-box{
-				display: flex;
-                display: -webkit-flex;
-                background-color: #000000;
-                flex-direction: row;
-                flex-flow: row wrap;
-                -webkit-flex-flow: row wrap;
-               justify-content: center;
-               align-items: center;
+			.container{
+				position: absolute;
+			    top: 44px;
+			    right: 0;
+			    bottom: 0;
+			    left: 0;
+			    width: 100%;
+				background-color: #2E3132;
+			}
+			.info{
+				position: relative;
+				overflow: hidden;
+				margin: 0 auto;
+				width: 80%;
+				top: 10%;
+				background-color: #fff;
+			}
+			.qrcode-info{
+				width: 80%;
+			    height: 100%;
+			    margin: 0 auto;
+			    padding-top: 10%;
+    			padding-bottom: 5%;
+			}
+			.face-nickname{
+				overflow: hidden;
+			}
+			.qrcode-image{
+				margin-top: 5%;
+				overflow: hidden;
+			}
+			.qrcode-image img{
+				width: 100%;
+			    height: 100%;
+			}
+			.face{
+
+				float: left;
+			}
+			.face img{
+				border-radius: 8%;
+				border: 1px solid black;
+			}
+			.nickname{
+				float: left;
+				margin-top: 10px;
+				margin-left: 10px;
+			}
+			.extra-info{
+				padding-top: 2%;
+				text-align: center;
+			}
+			.extra-info span{
+				color: #999999;
+				font-size: 14px;
 			}
 			
-			.holdcenter{
-				background-color: #000;
-                order:auto;
-                flex: 0 1 auto;
-                -webkit-flex: 0 1 auto;
-                align-self: auto;
-                overflow: hidden;
-			}
 		</style>
 	</head>
 
 	<body>
-		<header class="mui-bar mui-bar-transparent">
-          <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: white;"></a>
-		  <a id="openMenu" class="mui-icon mui-icon-right-nav mui-pull-right" style="color: white;">...</a>
-       </header>
-
+		<header class="mui-bar mui-bar-nav bar">
+		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option">我的二维码</a>
+		    <a id="link_download" class="mui-icon mui-icon-right-nav mui-pull-right option">
+		    	<span class="iconfont icon-download bar-btn"></span>
+		    </a>
+		</header>
 		
-		<div class="outer-box mui-fullscreen">
-			<div class="holdcenter">
-				<img id="myface_img" src=""/>
+		<div class="container">
+			<div class="info">
+				<div class="qrcode-info">
+					<div class="face-nickname">
+						<div class="face">
+							<img id="face-img" src="" />
+						</div>
+						<div class="nickname">
+							<span id="nickname-text"></span>
+						</div>
+					</div>
+					<div class="qrcode-image">
+						<img id="qrcode-img" src="" />
+					</div>
+					<div class="extra-info">
+						<span>
+							扫一扫上面的二维码图案,加我轻聊
+						</span>
+					</div>
+				</div>
 			</div>
-		</div>
-		
-		<div id="sheet-myface" class="mui-popover mui-popover-bottom mui-popover-action ">
-		    <!-- 可选择菜单 -->
-		    <ul class="mui-table-view">
-		      <li class="mui-table-view-cell">
-		        <a id="link_choosePhoto" href="#">选择照片</a>
-		      </li>
-		      <li class="mui-table-view-cell">
-		        <a id="link_downloadPhoto" href="#">下载照片</a>
-		      </li>
-		    </ul>
-		    <!-- 取消菜单 -->
-		    <ul class="mui-table-view">
-		      <li class="mui-table-view-cell">
-		        <a href="#sheet-myface"><b>取消</b></a>
-		      </li>
-		    </ul>
 		</div>
 		
 		<script src="../../js/mui.min.js"></script>
@@ -68,80 +107,51 @@
 			mui.init();
 			
 			mui.plusReady(function(){
-      			// 设置系统状态栏背景颜色
-      			plus.navigator.setStatusBarBackground("#000");
-      			
-      			refreshFace();
-      			
-      			// 添加自定义事件,刷新头像
-				window.addEventListener("refreshFace", function(){
-					refreshFace();
-				})
-			});
-							
-			// 点击菜单
-			var openMenu = document.getElementById("openMenu");
-			openMenu.addEventListener("tap", function(e){
-				mui("#sheet-myface").popover("toggle");
-			});
-				
-			// 选择照片绑定事件
-			var link_choosePhoto = document.getElementById("link_choosePhoto");
-			link_choosePhoto.addEventListener("tap", function(e){
-				mui.openWindow({
-					url: "face_img_uploader.html",
-					id: "face_img_uploader.html",
-					createNew: true});
-				mui("#sheet-myface").popover("toggle");
-			});
-				
-			// 下载照片绑定事件
-			var link_downloadPhoto = document.getElementById("link_downloadPhoto");
-			link_downloadPhoto.addEventListener("tap", function(e){
-				plus.nativeUI.showWaiting("下载中...");
-				
 				var userInfo = app.getUserGlobalInfo();
-				var faceImage = userInfo.faceImageBig;
 				
-				// 新建下载任务
-				var downloadTask = plus.downloader.createDownload(
-					app.imgserverUrl + faceImage,
-					{},
-					function(downloadFile, status){
-						plus.nativeUI.closeWaiting();
-						
-						if(status == 200){
-							var tempFile = downloadFile.filename;
-							// 通过相册api保存照片
-							plus.gallery.save(tempFile,function(){
-								app.showToast("下载成功");
-							})
-						} else{
-							app.showToast("下载失败");
-						}
-					}
-				);
-				downloadTask.start();
-				
-//				alert("下载照片");
-			});
-			
-			function refreshFace(){
-				var userInfo = app.getUserGlobalInfo();
-				if(userInfo != null){
-					var faceImage = userInfo.faceImageBig;
-					var faceImageOutput = document.getElementById("myface_img");
-					if(app.isNotEmpty(faceImage)){
-						faceImageOutput.src = app.imgserverUrl + faceImage;
-					}
-					// 获取手机端可见屏幕宽度
-					var imgWidth = document.body.clientWidth;
-					
-					// todo 可能图片太小不会超过屏幕宽度,需要优化
-					faceImageOutput.width = imgWidth;
-					faceImageOutput.height = imgWidth;
+				if(app.isNotEmpty(userInfo.faceImage)){
+					var faceImg = document.getElementById("face-img");
+					faceImg.src = app.imgserverUrl + userInfo.faceImage;
 				}
-			}
+				if(app.isNotEmpty(userInfo.nickname)){
+					var nicknameText = document.getElementById("nickname-text");
+					nicknameText.innerHTML = userInfo.nickname;
+				}
+				if(app.isNotEmpty(userInfo.qrcode)){
+					var qrcodeImg = document.getElementById("qrcode-img");
+					qrcodeImg.src = app.imgserverUrl + userInfo.qrcode;
+				}
+				
+				// 下载照片绑定事件
+				var link_download = document.getElementById("link_download");
+				link_download.addEventListener("tap", function(e){
+					plus.nativeUI.showWaiting("下载中...");
+					
+					var userInfo = app.getUserGlobalInfo();
+					var qrcode = userInfo.qrcode;	
+					
+					// 新建下载任务
+					var downloadTask = plus.downloader.createDownload(
+						app.imgserverUrl + qrcode,
+						{},
+						function(downloadFile, status){
+							plus.nativeUI.closeWaiting();
+							
+							if(status == 200){
+								var tempFile = downloadFile.filename;
+								// 通过相册api保存照片
+								plus.gallery.save(tempFile,function(){
+									app.showToast("下载成功");
+								})
+							} else{
+								app.showToast("下载失败");
+							}
+						}
+					);
+					downloadTask.start();
+					
+				});
+      		});
 		</script>
 	</body>
 

@@ -6,15 +6,131 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../../css/mui.min.css" rel="stylesheet" />
-		
+		<style type="text/css">
+			html,
+			body {
+				height: 100%;
+			}
+			
+			.mui-content {
+				height: 100%;
+				overflow: auto;
+			}
+			
+			.red-point {
+				position: relative;
+			}
+			
+			.red-point::before {
+				content: " ";
+				border: 5px solid #C9394A;
+				/*设置红色*/
+				border-radius: 5px;
+				/*设置圆角*/
+				position: absolute;
+				z-index: 3000;
+				right: 0%;
+				margin-right: -10px;
+				margin-top: 0px;
+			}
+		</style>
 	</head>
 
 	<body>
-		<h1>聊天记录</h1>
-		
+		<div class="mui-content">
+			<ul id="chat-snapshot-list" class="mui-table-view">
+				<!--<li class="mui-table-view-cell mui-media">
+					<div class="mui-slider-right mui-disabled">
+						<a class="mui-btn mui-btn-red">删除</a>
+					</div>
+					<div class="mui-slider-handle mui-media-body">
+						<img class="mui-media-object mui-pull-left" src="image/face-default-cat.png" />
+						<span class="red-point">慕课网</span>
+						<p class="mui-ellipsis">这里是聊天内容...</p>
+					</div>
+				</li>-->
+			</ul>
+		</div>
+
 		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/utils/StringUtil.js"></script>
+		<script src="../../js/app.js"></script>
+		<script src="../../js/CommonAction.js"></script>
+		<script src="../../js/cache/ChatSnapshot.js"></script>
+		<script src="../../js/cache/FriendCache.js"></script>
+
 		<script type="text/javascript">
-			mui.init()
+			mui.init();
+
+			mui.plusReady(function() {
+
+				initChatSnapshot();
+
+				initAction();
+			});
+
+			function initAction() {
+				// 自定义事件,刷新快照列表
+				window.addEventListener("refeshSnapshot", function() {
+					refeshSnapshot();
+				})
+			}
+
+			function refeshSnapshot() {
+				initChatSnapshot();
+			}
+			/**
+			 * 从缓存中读取聊天快照,渲染列表
+			 */
+			function initChatSnapshot() {
+				var startTime = new Date().getTime();
+
+				console.log("从缓存中读取聊天快照,渲染列表");
+				var snapshotList = ChatSnapshot.getChatSnapshot();
+				var finalHtml = "";
+				snapshotList.forEach((snapshot) => {
+					// TODO 查询性能优化看后期是否有优化的必要
+					//					var startTime = new Date().getTime();
+
+					var friendInfo = FriendCache.getFriend(snapshot.friendId);
+
+					//					var endTime = new Date().getTime();
+					//					console.log("查询好友信息耗时：" + (endTime - startTime));
+
+					var faceImage = app.imgserverUrl + friendInfo.faceImage;
+					var isRead = snapshot.isRead;
+					var redPointClass = '';
+					if(!isRead) {
+						redPointClass = 'red-point';
+					}
+					finalHtml += `<li friendUserId="${friendInfo.id}" class="chat-with-friend mui-table-view-cell mui-media">
+									<div class="mui-slider-right mui-disabled">
+										<a class="mui-btn mui-btn-red">删除</a>
+									</div>
+									<div class="mui-slider-handle mui-media-body">
+										<img class="mui-media-object mui-pull-left" src="${faceImage}" />
+										<span class="${redPointClass}">${friendInfo.nickname}</span>
+										<p class="mui-ellipsis">${snapshot.msg}</p>
+									</div>
+								</li>`
+				});
+
+				// 将快照列表进行渲染
+				document.getElementById("chat-snapshot-list").innerHTML = finalHtml;
+
+				// 给快照列表动态绑定事件
+				mui("#chat-snapshot-list").on("tap", ".chat-with-friend", function(e) {
+					const friendUserId = this.getAttribute("friendUserId");
+					// 没有网络也应该可以打开聊天记录
+					// 打开聊天子页面
+					openChatWebView({
+						url: "../chat/chatting.html"
+					}, friendUserId);
+				});
+
+				var endTime = new Date().getTime();
+				console.log("渲染快照列表时间：" + (endTime - startTime));
+			}
 		</script>
 	</body>
 

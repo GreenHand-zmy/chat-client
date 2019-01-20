@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../../font_icon/iconfont.css" />
+		<style type="text/css">
+			.mui-table-view {
+				background-color: #393A3F;
+				color: #fff;
+			}
+			
+			#sheet-chat a.mui-active {
+				background-color: #313136;
+			}
+			
+			.mui-table-view li a i {
+				margin-right: 10px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="sheet-chat">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">
+					<a href="#">
+						<i class="mui-icon mui-pull-left iconfont icon-chat-group"></i> 发起群聊
+					</a>
+				</li>
+				<li class="mui-table-view-cell">
+
+					<a id="link_add_friend" href="#">
+						<i class="mui-icon mui-pull-left iconfont icon-add_friends"></i> 添加朋友
+					</a>
+				</li>
+				<li class="mui-table-view-cell">
+
+					<a id="link_qr_code" href="#">
+						<i class="mui-icon mui-pull-left iconfont icon-scan"></i> 扫一扫
+					</a>
+				</li>
+			</ul>
+		</div>
+
+		<script src="../../js/mui.min.js"></script>
+		<script type="text/javascript">
+			mui.init();
+
+			window.addEventListener("closeMenu", function() {
+				var menuWebview = plus.webview.getWebviewById("add-popover.html");
+				plus.webview.hide(menuWebview);
+			});
+
+			mui.plusReady(function() {
+				var link_add_friend = document.getElementById("link_add_friend");
+				link_add_friend.addEventListener("tap", function() {
+					plus.webview.currentWebview().hide();
+					plus.webview.open("search-friend.html", "search-friend.html");
+				})
+
+				const link_qr_code = document.getElementById("link_qr_code");
+				link_qr_code.addEventListener("tap", (e) => {
+					plus.webview.currentWebview().hide();
+					plus.webview.open("scan-me.html", "scan-me.html");
+				})
+			});
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/header.css" />
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav bar">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option">添加朋友</a>
+			<a id="submitBtn" class="mui-icon mui-icon-right-nav mui-pull-right option">
+				搜索
+			</a>
+		</header>
+
+		<div class="mui-content">
+			<div class="mui-input-row">
+				<input id="username" type="text" class="mui-input-speech mui-input-clear" placeholder="好友帐号">
+			</div>
+		</div>
+
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js"></script>
+		<script type="text/javascript">
+			mui.init();
+
+			mui.plusReady(function() {
+				// 获取提交dom,并创建事件监听
+				var submitBtn = document.getElementById("submitBtn");
+				submitBtn.addEventListener("tap", function(e) {
+					var username = document.getElementById("username").value;
+
+					// 校验
+					var isValid = valid(username);
+					if(!isValid) {
+						app.showToast("昵称不能为空");
+						return;
+					}
+					
+					// 校验通过查找用户
+					search(username);
+				});
+			});
+			
+			/**
+			 * 通过账号查找用户
+			 * 
+			 * @param {Object} username
+			 */
+			function search(username) {
+				var url = app.serverUrl + "/user/search/";
+				app.globalAjax({
+					url: url,
+					type: 'get',
+					async: true,
+					data: {
+						'username': username,
+					}
+				}, function(data) {
+					var userInfo = data.data;
+
+					// 判断是否为好友,添加额外字段
+					isFriendRelation(userInfo);
+
+					// 页面跳转,并传递搜索结果
+					mui.openWindow({
+						url: "search-friend-result.html",
+						id: "search-friend-result.html",
+						extras: {
+							friendInfo: data.data
+						}
+					});
+				});
+			}
+			/**
+			 * 查看搜索出来的好友是否为好友,
+			 * 如果是好友添加added字段到搜索结果中
+			 * 
+			 * @param {Object} userInfo
+			 */
+			function isFriendRelation(userInfo) {
+
+				if(userInfo) {
+					var url = app.serverUrl + "/user/isFriendRelation";
+					app.globalAjax({
+						url: url,
+						type: 'get',
+						async: true,
+						data: {
+							'otherUserId': userInfo.id,
+						}
+					}, function(data) {
+						if(data) {
+							userInfo.added = data.data;
+						}
+					});
+				}
+			}
+
+			function valid(nickname) {
+				if(!app.isNotEmpty(nickname)) {
+					return false;
+				}
+				return true;
+			}
+		</script>
+	</body>
+
+</html>

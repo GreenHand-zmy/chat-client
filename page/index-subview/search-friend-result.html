@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			.btn {
+				background-color: #1AAD19;
+				color: #fff;
+				border: 1px solid #1AAD19;
+				width: 90%;
+				margin: 0 auto;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-pull-left mui-title">详细资料</h1>
+		</header>
+
+		<div class="mui-content">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;">
+						<img id="face-img" class="mui-media-object mui-pull-left" src="">
+						<div class="mui-media-body">
+							<span id="nickname_text">
+							</span>
+						</div>
+					</a>
+				</li>
+			</ul>
+
+			<br />
+
+			<div id="operation">
+				<button id="add-btn" class="mui-btn mui-btn-block btn" style="display: none;">添加到通讯录</button>
+				<button id="chat-btn" class="mui-btn mui-btn-block btn" style="display: none;">发起聊天</button>
+			</div>
+
+		</div>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			mui.init();
+
+			mui.plusReady(function() {
+				// 获取传递过来的结果
+				var friendInfo = plus.webview.currentWebview().friendInfo;
+				if(friendInfo) {
+					loadFriendInfo(friendInfo)
+
+					var chatBtn = document.getElementById("chat-btn");
+					var addBtn = document.getElementById("add-btn");
+
+					// 如果好友已添加
+					if(friendInfo.added) {
+						chatBtn.style.display = "block";
+					} else {
+						addBtn.style.display = "block";
+					}
+
+					// 给聊天按钮添加事件监听
+					chatBtn.addEventListener("tap", function() {
+
+					});
+					
+					// 给发送好友请求按钮添加事件监听
+					addBtn.addEventListener("tap", function() {
+						// 发送给后端
+						var url = app.serverUrl + '/user/friendRequest';
+						app.globalAjax({
+							url: url,
+							type: 'post',
+							data:{
+								'acceptUserId':friendInfo.id,
+							}
+						}, function(data) {
+							app.showToast("发送好友请求成功");
+						});
+					});
+				}
+			});
+
+			function loadFriendInfo(friendInfo) {
+				var faceImg = document.getElementById("face-img");
+				faceImg.src = app.imgserverUrl + friendInfo.faceImage;
+
+				var nickname_text = document.getElementById("nickname_text");
+				nickname_text.innerHTML = friendInfo.nickname;
+			}
+		</script>
+	</body>
+
+</html>

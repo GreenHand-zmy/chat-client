@@ -78,6 +78,11 @@
 		<script type="text/javascript" src="js/app.js"></script>
 		<script type="text/javascript">
 			mui.plusReady(function() {
+				// 禁用后退事件
+				mui.back = function(){
+					return false;
+				}
+				
 				// 判断用户是否注册登录过,如果本地内存有全局token,此时直接跳转到首页
 				var token = app.getUserGlobalToken();
 				if(app.isNotEmpty(token)) {

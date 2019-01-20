@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/header.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/chat.css" />
+		<style>
+			html,
+			body {
+				height: 100%;
+				margin: 0px;
+				padding: 0px;
+				overflow: hidden;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+			}
+		</style>
+	</head>
+
+	<body contextmenu="return false;">
+
+		<header class="mui-bar mui-bar-nav title" style="position: fixed;">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left title-color"></a>
+			<h1 class="mui-title title-color"><b id="chatting-nickname">慕 信</b></h1>
+		</header>
+
+		<div id="msg-outter" class="mui-content">
+			<div id='msg'>
+				<!--<div class="friend_lists">
+					<div class="header_img">
+						<img src="img/face-default-cat.png" width="40px" height="40px" />
+					</div>
+					<div class="msg-wrapper right">
+						<p class="msg-left-white">晚上过来吃饭？</p>
+					</div>
+				</div>
+				<div class="me_lists">
+					<div class="header_img">
+						<img src="image/face-default-cat.png" width="40px" height="40px" />
+					</div>
+					<div class="msg-wrapper left">
+						<p class="msg-right-green">好的，没问题！时间地点？</p>
+					</div>
+				</div>-->
+			</div>
+		</div>
+
+		<footer>
+			<div class="footer-center">
+				<textarea id='msg-text' type="text" class='input-text'></textarea>
+			</div>
+			<label for="" class="footer-right">
+				<button type="button" class="mui-btn mui-btn-gray" id="send">发送</button>
+			</label>
+		</footer>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js"></script>
+		<script src="../../js/packet/PacketType.js"></script>
+		<script src="../../js/packet/Packet.js"></script>
+		<script src="../../js/search-friend.js"></script>
+		<script src="../../js/utils/StringUtil.js"></script>
+		<script src="../../js/cache/HistoryCache.js"></script>
+		<script src="../../js/cache/FriendCache.js"></script>
+		<script src="../../js/cache/ChatSnapshot.js"></script>
+		<script type="text/javascript">
+			// 从缓存中读取好友信息,作为全局对象
+			var friendInfo;
+
+			mui.plusReady(() => {
+				initStyle();
+
+				initFriendInfo();
+
+				initAction();
+
+				initHistory();
+
+				// 设置快照为已读
+				setSnapshotReaded();
+			});
+
+			function initStyle() {
+				const thisWebView = plus.webview.currentWebview();
+				// 设置聊天界面的软键盘样式
+				thisWebView.setStyle({
+					softinputMode: "adjustResize"
+				});
+
+				// 设置自动滚动到最后一条
+				resizeScreen();
+
+				// 设置按钮样式
+				const msgTextDom = document.getElementById("msg-text");
+				const sendBtnDom = document.getElementById("send");
+				// 监听用户输入
+				msgTextDom.addEventListener("input", function(e) {
+					const msgTextLength = msgTextDom.value.length;
+					if(msgTextLength > 0) {
+						sendBtnDom.setAttribute("class", "mui-btn-green");
+					} else {
+						sendBtnDom.setAttribute("class", "mui-btn-gray");
+					}
+				})
+
+				// 对当前的窗口监听resize事件
+				window.addEventListener("resize", function(e) {
+					resizeScreen();
+				})
+			}
+
+			function initAction() {
+				const msgTextDom = document.getElementById("msg-text");
+				const sendBtnDom = document.getElementById("send");
+				sendBtnDom.addEventListener("tap", function(e) {
+					// 判断网络状态
+					const connectionStatus = plus.networkinfo.getCurrentType();
+					// 如果网络状态未知/或者没有网络
+					if(connectionStatus == 0 || connectionStatus == 1) {
+						app.showToast("请打开网络连接");
+						return;
+					}
+
+					// 获取消息内容
+					const msgTextDomText = msgTextDom.value;
+					if(msgTextDomText.length === 0) {
+						return;
+					}
+
+					// 发送消息
+					sendMsg(msgTextDomText);
+
+					// 清空输入栏
+					msgTextDom.value = "";
+					// 按钮恢复颜色
+					sendBtnDom.setAttribute("class", "mui-btn-gray");
+				});
+			}
+
+			function initFriendInfo() {
+				// 获取好友常规信息
+				friendInfo = getFriendInfo();
+				// 修改dom
+				document.getElementById("chatting-nickname").innerHTML = friendInfo.nickname;
+			}
+			/**
+			 * 从缓存中加载聊天记录
+			 */
+			function initHistory() {
+				console.log("加载聊天记录");
+				var myId = app.getUserGlobalInfo().id;
+				var friendId = friendInfo.id;
+				var historyList = HistoryCache.getHistoryCache(myId, friendId);
+
+				//				console.log("当前读取到了：" + JSON.stringify(historyList))
+				// 渲染html
+				var finalHtml = "";
+				historyList.forEach((hitoryItem) => {
+
+					if(hitoryItem.cacheType === HistoryCache.MSG_CACHE_TYPE.ME) {
+						var faceImage = app.imgserverUrl + app.getUserGlobalInfo().faceImage;
+						finalHtml += `<div class="me_lists">
+										<div class="header_img">
+											<img src="${faceImage}" width="40px" height="40px" />
+										</div>
+										<div class="msg-wrapper left">
+											<p class="msg-right-green">${hitoryItem.msg}</p>
+										</div>
+									 </div>`;
+					} else if(hitoryItem.cacheType === HistoryCache.MSG_CACHE_TYPE.FRIEND) {
+						var faceImage = app.imgserverUrl + friendInfo.faceImage;
+						finalHtml += `<div class="friend_lists">
+										<div class="header_img">
+											<img src="${faceImage}" width="40px" height="40px" />
+										</div>
+										<div class="msg-wrapper right">
+											<p class="msg-left-white">${hitoryItem.msg}</p>
+										</div>
+									 </div>`;
+					}
+				});
+
+				// 渲染
+				document.getElementById("msg").innerHTML = finalHtml;
+			}
+
+			function setSnapshotReaded() {
+				var myId = app.getUserGlobalInfo().id;
+				var friendId = friendInfo.id;
+				var historyList = HistoryCache.getHistoryCache(myId, friendId);
+				// 如果没有聊天记录,不需要设为已读
+				if(historyList && historyList.length > 0) {
+					var friendUserId = plus.webview.currentWebview().friendUserId;
+					// 将快照设为已读
+					ChatSnapshot.snapshotReaded(new Snapshot(friendUserId));
+
+					// 发出refresh快照列表
+					var ChatListWebView = plus.webview.getWebviewById("chat-list.html");
+					mui.fire(ChatListWebView, "refeshSnapshot");
+				}
+
+			}
+			/**
+			 * 重新调整聊天窗口
+			 */
+			function resizeScreen() {
+				const areaMsgList = document.getElementById("msg");
+				areaMsgList.scrollTop = areaMsgList.scrollHeight + areaMsgList.offsetHeight;
+			}
+			/**
+			 * 拿取好友信息
+			 */
+			function getFriendInfo() {
+
+				var friendId = plus.webview.currentWebview().friendUserId;
+				var friend = FriendCache.getFriend(friendId);
+				// 如果好友结果为空,才去远程拉取
+				if(friend == null || friend == undefined) {
+					search({
+						'userId': friendId
+					}, (result) => {
+						console.log("好友缓存为空,去远程拿取缓存 ：" + JSON.stringify(result));
+						// 添加到缓存中
+						FriendCache.saveFriend(result);
+					});
+
+					friend = FriendCache.getFriend(friendId);
+				}
+				// TODO 这里还是有问题,因为ajax是异步的,当缓存中没有的话,读取服务器没有那么快返回
+				return friend;
+			}
+			/**
+			 * 发送消息
+			 * @param {Object} msg
+			 */
+			function sendMsg(msg) {
+				var me = app.getUserGlobalInfo();
+				const faceImage = app.imgserverUrl + me.faceImage;
+				const msgHtml = `<div class="me_lists">
+									<div class="header_img">
+										<img src="${faceImage}" width="40px" height="40px" />
+									</div>
+									<div class="msg-wrapper left">
+										<p class="msg-right-green">${msg}</p>
+									</div>
+								</div>`
+
+				// 追加到dom中
+				document.getElementById("msg").insertAdjacentHTML("beforeEnd", msgHtml);
+
+				playSendMsgSound();
+
+				// 构造消息包,并发送
+				const senderId = me.id;
+				const receiverId = friendInfo.id;
+				const msgPacket = JSON.stringify(new Packet.MsgPacket(senderId, receiverId, msg, null));
+
+				const appWebView = plus.webview.getWebviewById("index.html");
+				appWebView.evalJS(`Chat.send('${msgPacket}')`);
+
+				resizeScreen();
+			}
+			/**
+			 * 接受消息
+			 * @param {Object} msg
+			 */
+			function receiveMsg(msg) {
+				const faceImage = app.imgserverUrl + friendInfo.faceImage;
+				const msgHtml = `<div class="friend_lists">
+									<div class="header_img">
+										<img src="${faceImage}" width="40px" height="40px" />
+									</div>
+									<div class="msg-wrapper right">
+										<p class="msg-left-white">${msg}</p>
+									</div>
+								</div>`
+
+				// 追加到dom中
+				document.getElementById("msg").insertAdjacentHTML("beforeEnd", msgHtml);
+				playReceiveMsgSound();
+				resizeScreen();
+			}
+
+			function playSendMsgSound() {
+				const audioPlayer = plus.audio.createPlayer("../../mp3/send.mp3");
+				audioPlayer.play();
+			}
+
+			function playReceiveMsgSound() {
+				const audioPlayer = plus.audio.createPlayer("../../mp3/di_didi.mp3");
+				audioPlayer.play();
+			}
+
+			function sendMessageError(message) {
+				alert(message + "发送失败");
+			}
+		</script>
+	</body>
+
+</html>

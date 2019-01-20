@@ -6,37 +6,38 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../../css/mui.min.css" rel="stylesheet" />
-		<link rel="stylesheet" type="text/css" href="../../plugin/cropprjs/css/cropper.css"/>
+		<link rel="stylesheet" type="text/css" href="../../css/header.css" />
+		<link rel="stylesheet" type="text/css" href="../../plugin/cropprjs/css/cropper.css" />
 		<script src="../../plugin/cropprjs/js/cropper.min.js"></script>
 		<script src="../../plugin/exif/exif.js"></script>
 		<style type="text/css">
-			.outer-box{
+			.outer-box {
 				display: flex;
-                display: -webkit-flex;
-                background-color: #000000;
-                flex-direction: row;
-                flex-flow: row wrap;
-                -webkit-flex-flow: row wrap;
-               justify-content: center;
-               align-items: center;
+				display: -webkit-flex;
+				background-color: #000000;
+				flex-direction: row;
+				flex-flow: row wrap;
+				-webkit-flex-flow: row wrap;
+				justify-content: center;
+				align-items: center;
 			}
 			
-			.holdcenter{
+			.holdcenter {
 				background-color: #007AFF;
-                order:auto;
-                flex: 0 1 auto;
-                -webkit-flex: 0 1 auto;
-                align-self: auto;
-                overflow: hidden;
+				order: auto;
+				flex: 0 1 auto;
+				-webkit-flex: 0 1 auto;
+				align-self: auto;
+				overflow: hidden;
 			}
 		</style>
 	</head>
 
 	<body>
-		<header class="mui-bar mui-bar-transparent">
-          <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: #fff;"></a>
-		  <a id="uploadBtn" class="mui-icon mui-icon-right-nav mui-pull-right" style="color: #1AAD19;font-size: 14px;">使用</a>
-        </header>
+		<header class="mui-bar mui-bar-transparent bar" style="background-color: #000">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option"></a>
+			<a id="uploadBtn" class="mui-icon mui-icon-right-nav mui-pull-right option">使用</a>
+		</header>
 
 		<div class="outer-box mui-fullscreen">
 			<div class="holdcenter">
@@ -48,98 +49,81 @@
 		<script src="../../js/app.js"></script>
 		<script type="text/javascript">
 			mui.init();
-			
+
 			var img = document.getElementById("cutter");
 			var cropper = null;
-			
-			mui.plusReady(function(){
+
+			mui.plusReady(function() {
 				// 打开手机相册,并筛选出所有图片文件
-				plus.gallery.pick(function(path){
-					canvasDataURL(path,{width:960,height:960},function(base64){
+				plus.gallery.pick(function(path) {
+					canvasDataURL(path, {
+						width: 960,
+						height: 960
+					}, function(base64) {
 						img.src = base64;
 						initCropper();
 					});
 				});
 			});
-			
+
 			// 给上传按钮绑定触摸事件
-			document.getElementById("uploadBtn").addEventListener("tap",function(){
-				plus.nativeUI.showWaiting("上传中...");
-				
-				cropper.getCroppedCanvas().toBlob(function(blob){
+			document.getElementById("uploadBtn").addEventListener("tap", function() {
+				cropper.getCroppedCanvas().toBlob(function(blob) {
 					var formData = new FormData();
 					// 获取当前时间,并编为文件名
-					var imgFilename = new Date().getTime() +".png";
-  					formData.append('faceImage', blob, imgFilename);
-  					
+					var imgFilename = new Date().getTime() + ".png";
+					formData.append('faceImage', blob, imgFilename);
+
 					// 获取全局用户对象
 					var user = app.getUserGlobalInfo();
-					var token = app.getUserGlobalToken();
 
-  					// 调用ajax上传用户头像
-  					mui.ajax(app.serverUrl + "/user/" + user.id + "/faceImage",{
-						type:'put', 
-						data:formData,
-						headers:{
-							'X_USER_TOKEN' : token
-						},
+					var url = app.serverUrl + "/user/faceImage";
+					app.globalAjax({
+						url: url,
+						type: 'put',
 						processData: false,
 						contentType: false,
-						timeout: app.globalTimeout,
-						success: function(data){
-							// 获取到响应关闭等待窗口
-							plus.nativeUI.closeWaiting();
-							
-							// 服务器返回响应，根据响应结果，分析是否登录成功
-							if(data.code == app.dataStatus.success){
-								// 更新本地缓存
-								app.setUserGlobalInfo(data.data);
-								
-								// 获取跳转页面的webview对象,触发自定义事件
-								var chat_me_Webview = plus.webview.getWebviewById("chat-me.html");
-								mui.fire(chat_me_Webview, "refreshUserInfo");
-								var myface_Webview = plus.webview.getWebviewById("myface.html");
-								mui.fire(myface_Webview, "refreshFace");
-								
-								// 页面跳转
-								mui.openWindow({url: "index.html",id: "index.html"});
-							}else{
-								app.showToast(data.info);
-							}
-						},
-						error: function(xhr,type,errorThrown){
-							plus.nativeUI.closeWaiting();
-							//异常处理；
-							if(type == 'timeout'){
-								app.showToast("连接服务器超时,请稍后再试");
-							}
-						}
+						data: formData
+					}, function(data) {
+						// 更新本地缓存
+						app.setUserGlobalInfo(data.data);
+
+						// 获取跳转页面的webview对象,触发自定义事件
+						var chat_me_Webview = plus.webview.getWebviewById("chat-me.html");
+						mui.fire(chat_me_Webview, "refreshUserInfo");
+						var myface_Webview = plus.webview.getWebviewById("myface.html");
+						mui.fire(myface_Webview, "refreshFace");
+
+						// 页面跳转
+						mui.openWindow({
+							url: "index.html",
+							id: "index.html"
+						});
 					});
 				});
 			});
-			
-			function initCropper(){
+
+			function initCropper() {
 				// 进行剪裁
 				cropper = new Cropper(img, {
 					// 裁剪框1:1
-                    aspectRatio: 1,
-                    // 允许背后图片移动
-                    dragMode:'move',
-                    cropBoxMovable:false,
-                    viewMode:0,
-                    guides:false,
-                    center:false,
-                    minCropBoxWidth:280,
-                    minCropBoxHeight:280,
-                    minCanvasWidth:0,
-                    minCanvasHeight:0,
-                    minContainerWidth:200,
-                    minContainerHeight:200,
-                    //是否允许 调整 剪裁框 的大小
-                    cropBoxResizable: false, 
-                    crop: function(data) {
-                    }
-              });	
+					aspectRatio: 1,
+					// 允许背后图片移动
+					dragMode: 'move',
+					cropBoxMovable: false,
+					viewMode: 0,
+					guides: false,
+					center: false,
+					minCropBoxWidth: 280,
+					minCropBoxHeight: 280,
+					minCanvasWidth: 0,
+					minCanvasHeight: 0,
+					minContainerWidth: 200,
+					minContainerHeight: 200,
+					//是否允许 调整 剪裁框 的大小
+					cropBoxResizable: false,
+					crop: function(data) {}
+				});
 			}
 			/**
 			 * 本地压缩图片渲染 将图片压缩并返回图片base64数据
@@ -148,69 +132,68 @@
 			 * quality:图片质量 数值越小质量越差 默认0.7
 			 * @param {Object} resultCallback  成功后回调
 			 */
-			function canvasDataURL(pathUrl, options, resultCallback){
+			function canvasDataURL(pathUrl, options, resultCallback) {
 				// 显示稍等
-				plus.nativeUI.showWaiting( "加载中请稍等..." );
-				
+				plus.nativeUI.showWaiting("加载中请稍等...");
+
 				var imgage = new Image();
 				imgage.src = pathUrl;
-				imgage.onload = function(){
+				imgage.onload = function() {
 					// 获取图片信息
-					EXIF.getData(this, function(){
+					EXIF.getData(this, function() {
 						var orientation = EXIF.getTag(this, 'Orientation');
-					
+
 						var picWidth = imgage.width,
 							picHeight = imgage.height,
 							scale = picWidth / picHeight;
-						
+
 						// 质量默认为0.7
 						var quality = 0.7;
 						// 如果存在自定义的最大宽度和最大高度,则修改
-						if(options){
-							picWidth =  options.width || picWidth;
+						if(options) {
+							picWidth = options.width || picWidth;
 							picHeight = options.height || picWidth / scale;
-							quality =   options.quality || quality;
-						}else{
+							quality = options.quality || quality;
+						} else {
 							picWidth = picWidth;
 							picHeight = picWidth / scale;
-							quality =   options.quality || 0.7;
+							quality = options.quality || 0.7;
 						}
-						
+
 						// 生成canvas
 						var canvas = document.createElement('canvas');
 						var ctx = canvas.getContext('2d');
-						canvas.width = Math.max(picWidth,picHeight);
-					    canvas.height = Math.max(picWidth,picHeight); 
-					    
-						if(orientation && orientation != 1){
-							switch(orientation){
-								case 6:		// 解决图片旋转90度问题
-								    ctx.rotate(Math.PI / 2);
+						canvas.width = Math.max(picWidth, picHeight);
+						canvas.height = Math.max(picWidth, picHeight);
+
+						if(orientation && orientation != 1) {
+							switch(orientation) {
+								case 6: // 解决图片旋转90度问题
+									ctx.rotate(Math.PI / 2);
 									ctx.drawImage(this, 0, -picHeight, picWidth, picHeight);
-								    break;
-								case 3:     // 旋转180度
-	                            	ctx.rotate(Math.PI);    
-	                            	ctx.drawImage(this, -picWidth, -picHeight, picWidth, picHeight);
-	                            	break;
-								case 8:     // 旋转-90度
-		                            canvas.width = picHeight;    
-		                            canvas.height = picWidth;    
-		                            ctx.rotate(3 * Math.PI / 2);
-		                            ctx.drawImage(this, -picWidth, 0, picWidth, picHeight);
-		                            break;                           
+									break;
+								case 3: // 旋转180度
+									ctx.rotate(Math.PI);
+									ctx.drawImage(this, -picWidth, -picHeight, picWidth, picHeight);
+									break;
+								case 8: // 旋转-90度
+									canvas.width = picHeight;
+									canvas.height = picWidth;
+									ctx.rotate(3 * Math.PI / 2);
+									ctx.drawImage(this, -picWidth, 0, picWidth, picHeight);
+									break;
 							}
-						}else {
+						} else {
 							// 有些图片不包含信息
-	                        ctx.drawImage(this, 0, 0, picWidth, picHeight);
-	                  }
+							ctx.drawImage(this, 0, 0, picWidth, picHeight);
+						}
 						// 将等待框关闭
 						plus.nativeUI.closeWaiting();
-		                var base64 = canvas.toDataURL('image/jpeg', quality);
-		                resultCallback(base64);
+						var base64 = canvas.toDataURL('image/jpeg', quality);
+						resultCallback(base64);
 					})
 				}
 			}
-
 		</script>
 	</body>
 

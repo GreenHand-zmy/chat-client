@@ -1,16 +1,28 @@
-.mui-bar-tab .mui-tab-item.mui-active{
+.mui-bar-tab .mui-tab-item.mui-active {
 	color: #46C01B;
 }
 
-.bar{
+.bar {
 	background-color: #303030;
-	line-height: 16px;
+	line-height: 25px;
+	-webkit-box-shadow: none;
+	box-shadow: none;
 }
 
-.bar .title{
+.bar .option {
+	font-size: 18px;
 	color: #fff;
+	line-height: 25px;
 }
 
-.bar .font{
-	font-size: 16px;
+.bar .bar-btn {
+	font-size: 20px;
+}
+
+.bar h1,
+h2,
+h3,
+h4,
+h5 {
+	color: #fff;
 }

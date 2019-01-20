@@ -6,14 +6,286 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../../css/contact.css" />
+		<link rel="stylesheet" type="text/css" href="../../font_icon/iconfont.css" />
+		<style type="text/css">
+			html,
+			body {
+				height: 100%;
+				overflow: hidden;
+			}
+			
+			.mui-bar {
+				-webkit-box-shadow: none;
+				box-shadow: none;
+			}
+			
+			.option-font {
+				line-height: 24px;
+				margin-left: 10px;
+			}
+			
+			.iconfont {
+				font-size: 24px;
+			}
+		</style>
 	</head>
 
 	<body>
-		<h1>联系人</h1>
-		
+		<div class="mui-content">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a id="link_friend_request" href="javascript:;">
+						<span class="mui-icon iconfont icon-newFriend mui-pull-left">
+						</span>
+						<div class="mui-media-body mui-pull-left option-font">
+							新的朋友
+						</div>
+					</a>
+				</li>
+			</ul>
+
+			<br />
+
+			<div id='list' class="mui-indexed-list">
+				<div class="mui-indexed-list-search mui-input-row mui-search">
+					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索机场">
+				</div>
+				<div class="mui-indexed-list-bar">
+					<a>A</a>
+					<a>B</a>
+					<a>C</a>
+					<a>D</a>
+					<a>E</a>
+					<a>F</a>
+					<a>G</a>
+					<a>H</a>
+					<a>I</a>
+					<a>J</a>
+					<a>K</a>
+					<a>L</a>
+					<a>M</a>
+					<a>N</a>
+					<a>O</a>
+					<a>P</a>
+					<a>Q</a>
+					<a>R</a>
+					<a>S</a>
+					<a>T</a>
+					<a>U</a>
+					<a>V</a>
+					<a>W</a>
+					<a>X</a>
+					<a>Y</a>
+					<a>Z</a>
+					<a>#</a>
+				</div>
+				<div class="mui-indexed-list-alert"></div>
+				<div class="mui-indexed-list-inner">
+					<div class="mui-indexed-list-empty-alert">没有数据</div>
+					<ul id="friend-list-dom" class="mui-table-view">
+						<!--<li data-group="A" class="mui-table-view-divider mui-indexed-list-group">A</li>
+						<li class="mui-media mui-table-view-cell mui-indexed-list-item">
+							<img class="mui-media-object mui-pull-left" src="../../css/registLogin/arrow.jpg" style="max-height: 35px;height: 35px;" />
+							<div class="mui-media-body" style="line-height: 35px;">阿克苏</div>
+						</li>-->
+					</ul>
+				</div>
+			</div>
+		</div>
+
 		<script src="../../js/mui.js"></script>
+		<script src="../../js/app.js"></script>
+		<script src="../../js/nicknameUtils.js"></script>
+		<script src="../../js/cache/FriendCache.js"></script>
+		<script src="../../js/friendList.js"></script>
+		<script src="../../js/CommonAction.js"></script>
+		<script src="../../js/search-friend.js"></script>
+		<script src="../../js/contact.js"></script>
+
 		<script type="text/javascript">
-			mui.init()
+			mui.init();
+
+			mui.plusReady(function() {
+				// 添加自定义事件
+				window.addEventListener("refreshList", function() {
+					refreshList();
+				})
+
+				// 获取好友列表
+				fetchAndSaveFriendList();
+
+				var thisWebView = plus.webview.currentWebview();
+				thisWebView.addEventListener("show", () => {
+					// 从缓存中读取好友列表,并渲染到列表中
+					loadFriendList();
+					// 展示列表
+					showFriendList();
+				})
+
+				// 按下新的朋友按钮,跳转到新页面
+				document.getElementById("link_friend_request")
+					.addEventListener("tap", function() {
+						mui.openWindow({
+							url: "friend-request.html",
+							id: "friend-request.html"
+						});
+					});
+			});
+
+			function refreshList() {
+				// 从缓存中读取好友列表,并渲染到列表中
+				loadFriendList();
+				// 展示列表
+				showFriendList();
+			}
+
+			function loadFriendList() {
+				// 从缓存中取出好友列表,如果缓存为空,直接从服务端拉取
+				var friendList = FriendCache.getFriendList();
+
+				if(friendList == null || friendList.lenth == 0) {
+					fetchAndSaveFriendList();
+					friendList = FriendCache.getFriendList();
+				}
+
+				// 遍历好友列表
+				friendList.forEach((friend) => {
+					// 获取首字母
+					var firstChar = word
+						.convertPinyin(friend.nickname)
+						.substring(0, 1)
+						.toUpperCase();
+
+					var order = getOrderOfChar(firstChar);
+					friendListArr[order].push(friend);
+				});
+
+				// 渲染html
+				var html = "";
+				friendListArr.forEach((friendList, index, arr) => {
+					//
+					if(friendList && friendList.length > 0) {
+						var nicknameStart = words[index];
+						html += `<li data-group="${nicknameStart}" class="mui-table-view-divider mui-indexed-list-group">${nicknameStart}</li>`
+
+						friendList.forEach((friend) => {
+							const nickname = friend.nickname;
+							const faceImage = app.imgserverUrl + friend.faceImage;
+							const friendUserId = friend.id;
+							html += `<li friendUserId="${friendUserId}" class="chat-with-friend mui-media mui-table-view-cell mui-indexed-list-item">
+										<img class="mui-media-object mui-pull-left" src="${faceImage}" style="max-height: 35px;height: 35px;" />
+										<div class="mui-media-body" style="line-height: 35px;">${nickname}</div>
+									</li>`
+						});
+					}
+				});
+
+				document.getElementById('friend-list-dom').innerHTML = html;
+
+				// 清空数组
+				clearFriendListArr();
+
+				// 动态绑定事件
+				mui("#friend-list-dom").on("tap", ".chat-with-friend", function(e) {
+					const friendUserId = this.getAttribute("friendUserId");
+					// 打开聊天子页面
+					openChatWebView({
+						url: "../chat/chatting.html"
+					}, friendUserId);
+				})
+			}
+
+			function showFriendList() {
+				var list = document.getElementById('list');
+				//calc hieght
+				list.style.height = (document.body.offsetHeight - 83) + 'px';
+				//create
+				window.indexedList = new mui.IndexedList(list);
+
+			}
+			// 26字母加#
+			var words = [
+				'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+				'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+				'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+			]
+			var friendListArr = [
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+				[],
+			]
+
+			function clearFriendListArr() {
+				friendListArr = [
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+				]
+			}
+
+			function getOrderOfChar(firstChar) {
+				let pos = -1;
+				words.forEach((enChar, index) => {
+					if(enChar === firstChar) {
+						pos = index;
+					}
+				})
+				if(pos === -1) {
+					return words.length - 1;
+				} else {
+					return pos;
+				}
+
+			}
 		</script>
 	</body>
 

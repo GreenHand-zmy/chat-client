@@ -5,138 +5,134 @@
 		<meta charset="UTF-8">
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
-		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css"/>
-		<link rel="stylesheet" type="text/css" href="../../css/header.css"/>
+		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/header.css" />
 		<style type="text/css">
-			.outer-box{
+			.outer-box {
 				display: flex;
-                display: -webkit-flex;
-                background-color: #000000;
-                flex-direction: row;
-                flex-flow: row wrap;
-                -webkit-flex-flow: row wrap;
-               justify-content: center;
-               align-items: center;
+				display: -webkit-flex;
+				background-color: #000000;
+				flex-direction: row;
+				flex-flow: row wrap;
+				-webkit-flex-flow: row wrap;
+				justify-content: center;
+				align-items: center;
 			}
 			
-			.holdcenter{
+			.holdcenter {
 				background-color: #000;
-                order:auto;
-                flex: 0 1 auto;
-                -webkit-flex: 0 1 auto;
-                align-self: auto;
-                overflow: hidden;
+				order: auto;
+				flex: 0 1 auto;
+				-webkit-flex: 0 1 auto;
+				align-self: auto;
+				overflow: hidden;
 			}
 		</style>
 	</head>
 
 	<body>
-		<header class="mui-bar mui-bar-transparent">
-          <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: white;"></a>
-		  <a id="openMenu" class="mui-icon mui-icon-right-nav mui-pull-right" style="color: white;">...</a>
-       </header>
+		<header class="mui-bar mui-bar-transparent bar" style="background-color: rgba(0,0,0,1)">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option"></a>
+			<a id="openMenu" class="mui-icon mui-icon-right-nav mui-pull-right option">...</a>
+		</header>
 
-		
 		<div class="outer-box mui-fullscreen">
 			<div class="holdcenter">
-				<img id="myface_img" src=""/>
+				<img id="myface_img" src="" />
 			</div>
 		</div>
-		
+
 		<div id="sheet-myface" class="mui-popover mui-popover-bottom mui-popover-action ">
-		    <!-- 可选择菜单 -->
-		    <ul class="mui-table-view">
-		      <li class="mui-table-view-cell">
-		        <a id="link_choosePhoto" href="#">选择照片</a>
-		      </li>
-		      <li class="mui-table-view-cell">
-		        <a id="link_downloadPhoto" href="#">下载照片</a>
-		      </li>
-		    </ul>
-		    <!-- 取消菜单 -->
-		    <ul class="mui-table-view">
-		      <li class="mui-table-view-cell">
-		        <a href="#sheet-myface"><b>取消</b></a>
-		      </li>
-		    </ul>
+			<!-- 可选择菜单 -->
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">
+					<a id="link_choosePhoto" href="#">选择照片</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a id="link_downloadPhoto" href="#">下载照片</a>
+				</li>
+			</ul>
+			<!-- 取消菜单 -->
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">
+					<a href="#sheet-myface"><b>取消</b></a>
+				</li>
+			</ul>
 		</div>
-		
+
 		<script src="../../js/mui.min.js"></script>
 		<script src="../../js/app.js"></script>
 		<script type="text/javascript">
-			
 			mui.init();
-			
-			mui.plusReady(function(){
-      			// 设置系统状态栏背景颜色
-      			plus.navigator.setStatusBarBackground("#000");
-      			
-      			refreshFace();
-      			
-      			// 添加自定义事件,刷新头像
-				window.addEventListener("refreshFace", function(){
+
+			mui.plusReady(function() {
+				// 设置系统状态栏背景颜色
+				plus.navigator.setStatusBarBackground("rgba(0,0,0,1)");
+
+				refreshFace();
+
+				// 添加自定义事件,刷新头像
+				window.addEventListener("refreshFace", function() {
 					refreshFace();
 				})
 			});
-							
+
 			// 点击菜单
 			var openMenu = document.getElementById("openMenu");
-			openMenu.addEventListener("tap", function(e){
+			openMenu.addEventListener("tap", function(e) {
 				mui("#sheet-myface").popover("toggle");
 			});
-				
+
 			// 选择照片绑定事件
 			var link_choosePhoto = document.getElementById("link_choosePhoto");
-			link_choosePhoto.addEventListener("tap", function(e){
+			link_choosePhoto.addEventListener("tap", function(e) {
 				mui.openWindow({
 					url: "face_img_uploader.html",
 					id: "face_img_uploader.html",
-					createNew: true});
+					createNew: true
+				});
 				mui("#sheet-myface").popover("toggle");
 			});
-				
+
 			// 下载照片绑定事件
 			var link_downloadPhoto = document.getElementById("link_downloadPhoto");
-			link_downloadPhoto.addEventListener("tap", function(e){
+			link_downloadPhoto.addEventListener("tap", function(e) {
 				plus.nativeUI.showWaiting("下载中...");
-				
+
 				var userInfo = app.getUserGlobalInfo();
 				var faceImage = userInfo.faceImageBig;
-				
+
 				// 新建下载任务
 				var downloadTask = plus.downloader.createDownload(
-					app.imgserverUrl + faceImage,
-					{},
-					function(downloadFile, status){
+					app.imgserverUrl + faceImage, {},
+					function(downloadFile, status) {
 						plus.nativeUI.closeWaiting();
-						
-						if(status == 200){
+
+						if(status == 200) {
 							var tempFile = downloadFile.filename;
 							// 通过相册api保存照片
-							plus.gallery.save(tempFile,function(){
+							plus.gallery.save(tempFile, function() {
 								app.showToast("下载成功");
 							})
-						} else{
+						} else {
 							app.showToast("下载失败");
 						}
 					}
 				);
 				downloadTask.start();
-				
-//				alert("下载照片");
 			});
-			
-			function refreshFace(){
+
+			function refreshFace() {
 				var userInfo = app.getUserGlobalInfo();
-				if(userInfo != null){
+				if(userInfo != null) {
 					var faceImage = userInfo.faceImageBig;
 					var faceImageOutput = document.getElementById("myface_img");
-					if(app.isNotEmpty(faceImage)){
+					if(app.isNotEmpty(faceImage)) {
 						faceImageOutput.src = app.imgserverUrl + faceImage;
 					}
 					// 获取手机端可见屏幕宽度
 					var imgWidth = document.body.clientWidth;
-					
+
 					// todo 可能图片太小不会超过屏幕宽度,需要优化
 					faceImageOutput.width = imgWidth;
 					faceImageOutput.height = imgWidth;

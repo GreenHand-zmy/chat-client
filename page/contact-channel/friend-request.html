@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../../css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			.action-btn {}
+		</style>
+	</head>
+	<div class="mui-content">
+		<ul id="request-list" class="mui-table-view">
+			<li class="btnOpt mui-table-view-cell mui-media">
+				<p class="mui-ellipsis" style="text-align: center;">
+					暂无好友请求
+				</p>
+			</li>
+		</ul>
+	</div>
+
+	<body>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../../js/friendList.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			mui.init();
+
+			mui.plusReady(function() {
+				loadFriendRequestList();
+			});
+
+			/**
+			 * 加载好友请求列表
+			 */
+			function loadFriendRequestList() {
+				let requestListDom = document.getElementById("request-list");
+				const url = app.serverUrl + '/user/friendRequest'
+				app.globalAjax({
+					url: url,
+					type: 'get',
+				}, function(data) {
+					const requestList = data.data;
+					if(requestList && requestList.length > 0) {
+						// 渲染好友请求列表
+						const requestListHtml = requestList.map((request) => {
+							return renderFriendRequest(request);
+						});
+						requestListDom.innerHTML = requestListHtml;
+
+						// 动态绑定事件
+						mui(".btnOpt").on("tap", ".acceptBtn", function(e) {
+							// 获取请求编号
+							const requestId = this.getAttribute("requestId");
+							// 发送接受请求
+							acceptRequest(requestId);
+						});
+						mui(".btnOpt").on("tap", ".rejectBtn", function(e) {
+							// 获取请求编号
+							const requestId = this.getAttribute("requestId");
+							// 发送拒绝请求
+							rejectRequest(requestId);
+						});
+					}
+
+				})
+			}
+
+			function renderFriendRequest(request) {
+				console.log(JSON.stringify(request));
+				let html = "";
+
+				// 请求发送者昵称
+				const senderNickname = request.senderNickname;
+				// 请求发送者头像
+				const senderFaceImage = app.imgserverUrl + request.senderFaceImage;
+				// 请求发送者编号
+				const requestId = request.requestId;
+
+				html = `<li class="btnOpt mui-table-view-cell mui-media">
+							<a href="javascript:;">
+								<img class="mui-media-object mui-pull-left" src="${senderFaceImage}">
+								<div class="mui-media-body mui-pull-left">
+									${senderNickname}
+									<p class="mui-ellipsis">
+										我是远传信息hr小远
+									</p>
+								</div>
+								<div class="action-btn mui-pull-right">
+									<button requestId="${requestId}" class="acceptBtn mui-btn mui-btn-primary mui-btn-outlined">添加</button>
+									<button requestId="${requestId}" class="rejectBtn mui-btn mui-btn-danger mui-btn-outlined">拒绝</button>
+								</div>
+							</a>
+						</li>`
+				return html;
+			}
+			/**
+			 * 接受好友请求
+			 * 
+			 * @param {Object} requestId
+			 */
+			function acceptRequest(requestId) {
+				const url = app.serverUrl + '/user/opt/friendRequest';
+				app.globalAjax({
+					url: url,
+					type: 'post',
+					data: {
+						'requestId': requestId,
+						'status': 1,
+					}
+				}, function(data) {
+					// 当请求通过时,拉取好友列表并缓存
+					fetchAndSaveFriendList();
+					const chat_contact_Webview = plus.webview.getWebviewById("chat-contact.html");
+					mui.fire(chat_contact_Webview, "refreshList");
+
+					// 重新加载请求列表
+					reload();
+				})
+			}
+
+			/**
+			 * 拒绝好友请求
+			 * 
+			 * @param {Object} requestId
+			 */
+			function rejectRequest(requestId) {
+				const url = app.serverUrl + '/user/opt/friendRequest';
+				app.globalAjax({
+					url: url,
+					type: 'post',
+					data: {
+						'requestId': requestId,
+						'status': 2,
+					}
+				}, function(data) {
+					reload();
+				})
+			}
+
+			function reload() {
+				loadFriendRequestList();
+			}
+		</script>
+	</body>
+
+</html>
