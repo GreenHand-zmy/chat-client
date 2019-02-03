@@ -11,8 +11,19 @@ window.FriendCache = {
 	 * @param {Object} friendList
 	 */
 	saveFriendList: function(friendList) {
+		/**
+		 * 构造cache对象
+		 * {firendid:friend,...}
+		 */
+		let friendMap = {};
 
-		plus.storage.setItem(FriendCache.KEY, JSON.stringify(friendList));
+		friendList.forEach((friend) => {
+			friendMap[friend.id] = friend;
+		});
+
+		console.log(JSON.stringify(friendMap));
+
+		plus.storage.setItem(FriendCache.KEY, JSON.stringify(friendMap));
 		console.log("保存好友列表完毕");
 	},
 	/**
@@ -28,31 +39,20 @@ window.FriendCache = {
     }
 	 */
 	saveFriend: function(friend) {
-		var friendList = FriendCache.getFriendList();
-
-		// 如果要保存的用户列表中没有的话则进行保存,如果列表中已经有该用户,则不进行保存
-		var existed = false;
-		friendList.forEach((item, index) => {
-			if(item.id == friend.id) {
-				existed = true;
-			}
-		});
-		if(!existed) {
-			console.log("成功保存了用户" + JSON.stringify(friend));
-			friendList.push(friend);
-			FriendCache.saveFriendList(friendList);
-		}
+		// 保存用户
+		var friendMap = FriendCache.getFriendList();
+		friendMap[friend.id] = friend;
+		plus.storage.setItem(FriendCache.KEY, JSON.stringify(friendMap));
 	},
 	/**
 	 * 从缓存中读取好友列表
 	 */
-	getFriendList: function() {
-		var friendListStr = plus.storage.getItem(FriendCache.KEY);
-		var friendList = JSON.parse(friendListStr);
-		if(friendList) {
-			return friendList;
+	getFriendListMap: function() {
+		var friendMap = JSON.parse(plus.storage.getItem(FriendCache.KEY));
+		if(friendMap) {
+			return friendMap;
 		} else {
-			return [];
+			return {};
 		}
 	},
 	/**
@@ -60,25 +60,25 @@ window.FriendCache = {
 	 * @param {Object} friendId
 	 */
 	getFriend: function(friendId) {
-		var friendList = plus.storage.getItem(FriendCache.KEY);
-		friendList = JSON.parse(friendList);
-		var friend;
-		if(friendList) {
-			// 查找是否
-			friendList.forEach((item) => {
-				if(item.id === friendId) {
-					console.log("使用friendId: " + friendId + " " + JSON.stringify(item));
-					friend = item;
-					return;
-				}
-			});
-			return friend;
+		const start = new Date().getTime();
+		var friendMap = JSON.parse(plus.storage.getItem(FriendCache.KEY));
+
+		if(friendMap) {
+			console.log("获取用户消耗了" + (new Date().getTime() - start));
+			return friendMap[friendId];
 		}
+	},
+	/**
+	 * 判断map是否为空
+	 * @param {Object} friendMap
+	 */
+	isEmpty: function(friendMap) {
+		return friendMap == null || JSON.stringify(friendMap) == "{}"
 	}
 }
 /**
  * 缓存的好友对象
  */
-function FriendCache() {
+function FriendMapItem() {
 
 }

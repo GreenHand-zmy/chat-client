@@ -106,6 +106,8 @@
 		<script type="text/javascript">
 			mui.init();
 
+			let loaded = false;
+
 			mui.plusReady(function() {
 				// 添加自定义事件
 				window.addEventListener("refreshList", function() {
@@ -117,10 +119,18 @@
 
 				var thisWebView = plus.webview.currentWebview();
 				thisWebView.addEventListener("show", () => {
-					// 从缓存中读取好友列表,并渲染到列表中
-					loadFriendList();
-					// 展示列表
-					showFriendList();
+					if(!loaded) {
+						plus.nativeUI.showWaiting("请稍等...");
+						
+						var start = new Date().getTime();
+						// 从缓存中读取好友列表,并渲染到列表中
+						loadFriendList();
+						// 展示列表
+						showFriendList();
+						
+						plus.nativeUI.closeWaiting();
+						console.log("展示列表用了" + (new Date().getTime() - start));
+					}
 				})
 
 				// 按下新的朋友按钮,跳转到新页面
@@ -141,16 +151,18 @@
 			}
 
 			function loadFriendList() {
+				loaded = true;
 				// 从缓存中取出好友列表,如果缓存为空,直接从服务端拉取
-				var friendList = FriendCache.getFriendList();
-
-				if(friendList == null || friendList.lenth == 0) {
+				var friendMap = FriendCache.getFriendListMap();
+				// TODO 暂时先注释
+				if(friendMap == null) {
 					fetchAndSaveFriendList();
 					friendList = FriendCache.getFriendList();
 				}
 
 				// 遍历好友列表
-				friendList.forEach((friend) => {
+				for(friendId in friendMap) {
+					var friend = friendMap[friendId];
 					// 获取首字母
 					var firstChar = word
 						.convertPinyin(friend.nickname)
@@ -159,17 +171,17 @@
 
 					var order = getOrderOfChar(firstChar);
 					friendListArr[order].push(friend);
-				});
+				}
 
 				// 渲染html
 				var html = "";
-				friendListArr.forEach((friendList, index, arr) => {
+				friendListArr.forEach((friendMap, index, arr) => {
 					//
-					if(friendList && friendList.length > 0) {
+					if(friendMap && friendMap.length > 0) {
 						var nicknameStart = words[index];
 						html += `<li data-group="${nicknameStart}" class="mui-table-view-divider mui-indexed-list-group">${nicknameStart}</li>`
 
-						friendList.forEach((friend) => {
+						friendMap.forEach((friend) => {
 							const nickname = friend.nickname;
 							const faceImage = app.imgserverUrl + friend.faceImage;
 							const friendUserId = friend.id;
