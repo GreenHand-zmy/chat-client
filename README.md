@@ -1,39 +1,20 @@
-# chat-fron
+# chat-client
 
 #### 项目介绍
-{**以下是码云平台说明，您可以替换为您的项目简介**
-码云是开源中国推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用码云实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
-
-#### 软件架构
-软件架构说明
-
+这是一款聊天app的客户端部分,使用Hbuild + h5+打造的混合app,由于作者本人时间有限,某些app的功能暂未实现,欢迎大家提交pr。
 
 #### 安装教程
 
-1. xxxx
-2. xxxx
-3. xxxx
+1. 克隆本项目到本地
+2. [下载Hbuild客户端](http://www.dcloud.io/)
+3. 打开hubild,在工具栏找到文件 -> 打开目录 -> 选择项目路径 -> 右键工作空间的项目 ->转化为移动app
 
-#### 使用说明
-
-1. xxxx
-2. xxxx
-3. xxxx
-
-#### 参与贡献
-
-1. Fork 本项目
-2. 新建 Feat_xxx 分支
-3. 提交代码
-4. 新建 Pull Request
-
-
-#### 码云特技
-
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+#### 配置说明
+1. 运行app你需要先运行服务端项目 ->
+2. 服务端搭建好之后,你需要修改 js/app.js文件配置
+```
+	serverUrl: "http://你的本地地址/或服务器地址:8080",
+	imServerUrl: "ws://本地地址/或服务器地址/ws",
+	imgserverUrl: "http://本地地址/或服务器地址/fdfs/",
+```
+3. 关于如何真机运行调试,请参考Hbuild的官网文档。
