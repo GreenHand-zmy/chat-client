@@ -49,7 +49,7 @@
 
 			<div id='list' class="mui-indexed-list">
 				<div class="mui-indexed-list-search mui-input-row mui-search">
-					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索机场">
+					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索好友">
 				</div>
 				<div class="mui-indexed-list-bar">
 					<a>A</a>
@@ -86,7 +86,7 @@
 					<ul id="friend-list-dom" class="mui-table-view">
 						<!--<li data-group="A" class="mui-table-view-divider mui-indexed-list-group">A</li>
 						<li class="mui-media mui-table-view-cell mui-indexed-list-item">
-							<img class="mui-media-object mui-pull-left" src="../../css/registLogin/arrow.jpg" style="max-height: 35px;height: 35px;" />
+							<img class="mui-media-object mui-pull-left" src="../../img/avatar/default_avatar.jpg" style="max-height: 35px;height: 35px;" />
 							<div class="mui-media-body" style="line-height: 35px;">阿克苏</div>
 						</li>-->
 					</ul>
@@ -102,7 +102,8 @@
 		<script src="../../js/CommonAction.js"></script>
 		<script src="../../js/search-friend.js"></script>
 		<script src="../../js/contact.js"></script>
-
+		<script src="../../js/utils/StringUtil.js"></script>
+		<script src="../../js/utils/AjaxUtil.js" ></script>
 		<script type="text/javascript">
 			mui.init();
 
@@ -111,6 +112,7 @@
 			mui.plusReady(function() {
 				// 添加自定义事件
 				window.addEventListener("refreshList", function() {
+					fetchAndSaveFriendList();
 					refreshList();
 				})
 
@@ -121,13 +123,13 @@
 				thisWebView.addEventListener("show", () => {
 					if(!loaded) {
 						plus.nativeUI.showWaiting("请稍等...");
-						
+
 						var start = new Date().getTime();
 						// 从缓存中读取好友列表,并渲染到列表中
 						loadFriendList();
 						// 展示列表
 						showFriendList();
-						
+
 						plus.nativeUI.closeWaiting();
 						console.log("展示列表用了" + (new Date().getTime() - start));
 					}
@@ -179,11 +181,16 @@
 					//
 					if(friendMap && friendMap.length > 0) {
 						var nicknameStart = words[index];
+						const defaultAvatar = "../../img/avatar/default_avatar.jpg"
 						html += `<li data-group="${nicknameStart}" class="mui-table-view-divider mui-indexed-list-group">${nicknameStart}</li>`
 
 						friendMap.forEach((friend) => {
 							const nickname = friend.nickname;
-							const faceImage = app.imgserverUrl + friend.faceImage;
+							let faceImage = app.imgserverUrl + friend.faceImage;
+							if(!StringUtil.isNotEmpty(friend.faceImage)) {
+								faceImage = defaultAvatar;
+							}
+							//							console.log(faceImage);
 							const friendUserId = friend.id;
 							html += `<li friendUserId="${friendUserId}" class="chat-with-friend mui-media mui-table-view-cell mui-indexed-list-item">
 										<img class="mui-media-object mui-pull-left" src="${faceImage}" style="max-height: 35px;height: 35px;" />

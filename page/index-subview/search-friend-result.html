@@ -45,13 +45,16 @@
 
 		</div>
 		<script src="../../js/mui.min.js"></script>
-		<script src="../../js/app.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../../js/app.js"></script>
+		<script src="../../js/utils/AjaxUtil.js"></script>
+		<script src="../../js/utils/StringUtil.js"></script>
 		<script type="text/javascript">
 			mui.init();
 
 			mui.plusReady(function() {
 				// 获取传递过来的结果
 				var friendInfo = plus.webview.currentWebview().friendInfo;
+				console.log(JSON.stringify(friendInfo));
 				if(friendInfo) {
 					loadFriendInfo(friendInfo)
 
@@ -67,7 +70,7 @@
 
 					// 给聊天按钮添加事件监听
 					chatBtn.addEventListener("tap", function() {
-
+						app.showToast("暂未实现");
 					});
 					
 					// 给发送好友请求按钮添加事件监听
@@ -89,8 +92,14 @@
 
 			function loadFriendInfo(friendInfo) {
 				var faceImg = document.getElementById("face-img");
-				faceImg.src = app.imgserverUrl + friendInfo.faceImage;
-
+				var faceUrl = app.imgserverUrl + friendInfo.faceImage;
+				
+				const defaultAvatar = "../../img/avatar/default_avatar.jpg";
+				if(!StringUtil.isNotEmpty(friendInfo.faceImage)) {
+					faceUrl = defaultAvatar;
+				}
+				
+				faceImg.src = faceUrl;
 				var nickname_text = document.getElementById("nickname_text");
 				nickname_text.innerHTML = friendInfo.nickname;
 			}

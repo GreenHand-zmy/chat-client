@@ -59,6 +59,7 @@
 		</footer>
 		<script src="../../js/mui.min.js"></script>
 		<script src="../../js/app.js"></script>
+		<script src="../../js/utils/AjaxUtil.js"></script>
 		<script src="../../js/packet/PacketType.js"></script>
 		<script src="../../js/packet/Packet.js"></script>
 		<script src="../../js/search-friend.js"></script>
@@ -153,44 +154,50 @@
 				console.log("加载聊天记录");
 				var myId = app.getUserGlobalInfo().id;
 				var friendId = friendInfo.id;
-				var historyList = HistoryCache.getHistoryCache(myId, friendId);
+				var historyList = HistoryCache.getHistoryCache(friendId);
 
-				//				console.log("当前读取到了：" + JSON.stringify(historyList))
-				// 渲染html
-				var finalHtml = "";
-				historyList.forEach((hitoryItem) => {
+				if(historyList.length > 0) {
+					// 渲染聊天记录,并调整屏幕
+					renderHistory(historyList);
+					resizeScreen();
+				} else {
+					// 如果本地没有聊天记录,去远程拉取
+					fetchHistory(function(res) {
+						var msgItemArray = res.data.records;
+						/*msgItemArray.forEach(msgItem => {
+							console.log(JSON.stringify(msgItem));
+						});*/
 
-					if(hitoryItem.cacheType === HistoryCache.MSG_CACHE_TYPE.ME) {
-						var faceImage = app.imgserverUrl + app.getUserGlobalInfo().faceImage;
-						finalHtml += `<div class="me_lists">
-										<div class="header_img">
-											<img src="${faceImage}" width="40px" height="40px" />
-										</div>
-										<div class="msg-wrapper left">
-											<p class="msg-right-green">${hitoryItem.msg}</p>
-										</div>
-									 </div>`;
-					} else if(hitoryItem.cacheType === HistoryCache.MSG_CACHE_TYPE.FRIEND) {
-						var faceImage = app.imgserverUrl + friendInfo.faceImage;
-						finalHtml += `<div class="friend_lists">
-										<div class="header_img">
-											<img src="${faceImage}" width="40px" height="40px" />
-										</div>
-										<div class="msg-wrapper right">
-											<p class="msg-left-white">${hitoryItem.msg}</p>
-										</div>
-									 </div>`;
-					}
-				});
+						// 将服务端的聊天记录保存到本地缓存,并读取渲染
+						HistoryCache.saveMsgItemArray(friendId, msgItemArray);
+						historyList = HistoryCache.getHistoryCache(friendId);
+						renderHistory(historyList);
+						resizeScreen();
+					});
+				}
+			}
 
-				// 渲染
-				document.getElementById("msg").innerHTML = finalHtml;
+			function fetchHistory(callback) {
+				AjaxUtil.ajaxWithToken({
+					url: '/user/history',
+					type: 'post',
+					data: {
+						"condition": {
+							"friendUserId": friendInfo.id
+						},
+						"desc": "gmt_modified",
+						"pageNum": 1,
+						"pageSize": 1000
+					},
+					contentType: 'json',
+					async: true
+				}, callback);
 			}
 
 			function setSnapshotReaded() {
 				var myId = app.getUserGlobalInfo().id;
 				var friendId = friendInfo.id;
-				var historyList = HistoryCache.getHistoryCache(myId, friendId);
+				var historyList = HistoryCache.getHistoryCache(friendId);
 				// 如果没有聊天记录,不需要设为已读
 				if(historyList && historyList.length > 0) {
 					var friendUserId = plus.webview.currentWebview().friendUserId;
@@ -238,7 +245,13 @@
 			 */
 			function sendMsg(msg) {
 				var me = app.getUserGlobalInfo();
-				const faceImage = app.imgserverUrl + me.faceImage;
+				let faceImage = app.imgserverUrl + me.faceImage;
+
+				const defaultAvatar = "../../img/avatar/default_avatar.jpg"
+				if(!StringUtil.isNotEmpty(me.faceImage)) {
+					faceImage = defaultAvatar;
+				}
+
 				const msgHtml = `<div class="me_lists">
 									<div class="header_img">
 										<img src="${faceImage}" width="40px" height="40px" />
@@ -256,11 +269,14 @@
 				// 构造消息包,并发送
 				const senderId = me.id;
 				const receiverId = friendInfo.id;
-				const msgPacket = JSON.stringify(new Packet.MsgPacket(senderId, receiverId, msg, null));
+				let msgPacket = new Packet.MsgPacket(senderId, receiverId, msg, null);
 
+				msgPacket = JSON.stringify(msgPacket);
+				// 调用首页js
 				const appWebView = plus.webview.getWebviewById("index.html");
-				appWebView.evalJS(`Chat.send('${msgPacket}')`);
+				appWebView.evalJS(`Chat.sendToServer('${msgPacket}')`);
 
+				// 调整聊天界面大小
 				resizeScreen();
 			}
 			/**
@@ -268,7 +284,12 @@
 			 * @param {Object} msg
 			 */
 			function receiveMsg(msg) {
-				const faceImage = app.imgserverUrl + friendInfo.faceImage;
+				let faceImage = app.imgserverUrl + friendInfo.faceImage;
+				
+				const defaultAvatar = "../../img/avatar/default_avatar.jpg"
+				if(!StringUtil.isNotEmpty(friendInfo.faceImage)) {
+					faceImage = defaultAvatar;
+				}
 				const msgHtml = `<div class="friend_lists">
 									<div class="header_img">
 										<img src="${faceImage}" width="40px" height="40px" />
@@ -296,6 +317,50 @@
 
 			function sendMessageError(message) {
 				alert(message + "发送失败");
+			}
+
+			function renderHistory(historyList) {
+				// 渲染html
+				var finalHtml = "";
+				historyList.forEach((hitoryItem) => {
+
+					if(hitoryItem.status == HistoryCache.MSG_STATUS.ERROR) {
+						hitoryItem.msgContent = "该消息没有正常的发送: " + hitoryItem.msgContent;
+					}
+
+					// console.log(JSON.stringify(hitoryItem));
+					const defaultAvatar = "../../img/avatar/default_avatar.jpg"
+					if(hitoryItem.owner === HistoryCache.OWNER_TYPE.ME) {
+						var faceImage = app.imgserverUrl + app.getUserGlobalInfo().faceImage;
+						if(!StringUtil.isNotEmpty(app.getUserGlobalInfo().faceImage)) {
+							faceImage = defaultAvatar;
+						}
+						finalHtml += `<div class="me_lists">
+										<div class="header_img">
+											<img src="${faceImage}" width="40px" height="40px" />
+										</div>
+										<div class="msg-wrapper left">
+											<p class="msg-right-green">${hitoryItem.msgContent}</p>
+										</div>
+									 </div>`;
+					} else if(hitoryItem.owner === HistoryCache.OWNER_TYPE.FRIEND) {
+						var faceImage = app.imgserverUrl + friendInfo.faceImage;
+						if(!StringUtil.isNotEmpty(friendInfo.faceImage)) {
+							faceImage = defaultAvatar;
+						}
+						finalHtml += `<div class="friend_lists">
+										<div class="header_img">
+											<img src="${faceImage}" width="40px" height="40px" />
+										</div>
+										<div class="msg-wrapper right">
+											<p class="msg-left-white">${hitoryItem.msgContent}</p>
+										</div>
+									 </div>`;
+					}
+				});
+
+				// 渲染
+				document.getElementById("msg").innerHTML = finalHtml;
 			}
 		</script>
 	</body>

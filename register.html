@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style>
+			.ui-page-login,
+			body {
+				width: 100%;
+				height: 100%;
+				margin: 0px;
+				padding: 0px;
+			}
+			
+			.mui-content {
+				height: 100%;
+			}
+			
+			.area {
+				margin: 20px auto 0px auto;
+			}
+			
+			.mui-input-group:first-child {
+				margin-top: 20px;
+			}
+			
+			.mui-input-group label {
+				width: 22%;
+			}
+			
+			.mui-input-row label~input,
+			.mui-input-row label~select,
+			.mui-input-row label~textarea {
+				width: 78%;
+			}
+			
+			.mui-checkbox input[type=checkbox],
+			.mui-radio input[type=radio] {
+				top: 6px;
+			}
+			
+			.mui-content-padded {
+				margin-top: 25px;
+			}
+			
+			.mui-btn {
+				padding: 10px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">注册</h1>
+		</header>
+		<div class="mui-content">
+			<form class="mui-input-group">
+				<div class="mui-input-row">
+					<label>用户名</label>
+					<input id='username' type="text" class="mui-input-clear mui-input" placeholder="请输入账号">
+				</div>
+				<div class="mui-input-row">
+					<label>昵称</label>
+					<input id='nickname' type="text" class="mui-input-clear mui-input" placeholder="请输入昵称">
+				</div>
+				<div class="mui-input-row">
+					<label>密码</label>
+					<input id='password' type="password" class="mui-input-clear mui-input" placeholder="请输入密码">
+				</div>
+				<div class="mui-input-row">
+					<label>确认</label>
+					<input id='password_confirm' type="password" class="mui-input-clear mui-input" placeholder="请确认密码">
+				</div>
+			</form>
+			<div class="mui-content-padded">
+				<button id='reg' class="mui-btn mui-btn-block mui-btn-primary">注册</button>
+			</div>
+
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/utils/StringUtil.js"></script>
+		<script src="js/utils/AjaxUtil.js" ></script>
+		<script>
+			mui.init();
+			mui.plusReady(function() {
+				const regBtn = document.getElementById("reg");
+				regBtn.addEventListener("tap", (e) => {
+					// 获取每台手机唯一的cid
+					// 需要开启push才可以
+//					var clientId = plus.push.getClientInfo().clientid;
+					
+					let register = {};
+					register.username = document.getElementById("username").value;
+					register.nickname = document.getElementById("nickname").value;
+					register.password = document.getElementById("password").value;
+					register.passwordConfirm = document.getElementById("password_confirm").value;
+//					register.clientId = clientId;
+					
+					// 表单字段校验
+					if(!vaildForm(register)) {
+						return;
+					}
+
+					// ajax访问登录接口
+					AjaxUtil.globalAjax({
+						url: "/user/register",
+						type: "post",
+						data: register,
+						contentType: 'json',
+					}, function(data) {
+						mui.openWindow("login.html", "login.html");
+					});
+				})
+			});
+
+			function vaildForm(register) {
+				console.log("校验的注册信息为 "+JSON.stringify(register));
+				const {
+					username,
+					nickname,
+					password,
+					passwordConfirm,
+				} = register;
+
+				if(!StringUtil.isNotEmpty(username)) {
+					app.showToast("用户名不能为空");
+					return false;
+				} else if(!StringUtil.isNotEmpty(nickname)) {
+					app.showToast("昵称不能为空");
+					return false;
+				} else if(!StringUtil.isNotEmpty(password)) {
+					app.showToast("密码不能为空");
+					return false;
+				} else if(password !== passwordConfirm) {
+					app.showToast("两次密码不一致");
+					return false;
+				} else {
+					// 都不为空判断是否符合后端要求
+					if(!(username.length > 4 && username.length < 20)) {
+						app.showToast("用户名长度要在4-20之间");
+						return false;
+					} else if(!(password.length > 4 && password.length < 20)) {
+						app.showToast("密码长度要在4-20之间");
+						return false;
+					}
+				}
+				return true;
+			}
+		</script>
+	</body>
+
+</html>

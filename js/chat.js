@@ -57,12 +57,11 @@ window.Chat = {
 	 * @param {Object} message
 	 */
 	wsMessage: function(message) {
+		console.log("服务端发来的包为 " + message.data);
 		// 接受到消息
 		var msgPacket = JSON.parse(message.data);
 		// 包类型
 		var packetType = msgPacket.type;
-		console.log("服务端发来的包：" + JSON.stringify(msgPacket));
-		console.log("包类型为：" + packetType);
 		switch(packetType) {
 			// 包为普通消息类型
 			case PacketType.NORMAL_MSG_PACKET:
@@ -74,6 +73,12 @@ window.Chat = {
 			case PacketType.NORMAL_MSG_LIST_PACKET:
 				{
 					processNormalMessageList(msgPacket);
+					break;
+				}
+			case PacketType.REFURBISH_PACKET:
+				{
+					refurbishResource(msgPacket);
+					break;
 				}
 			default:
 				{
@@ -83,39 +88,25 @@ window.Chat = {
 
 	},
 	/**
-	 * 发送普通消息到服务器
-	 * @param {Object} msgPacket
+	 * 客户端发送包到服务端
+	 * @param {Object} packet
 	 */
-	send: function(msgPacket) {
-		msgPacket = JSON.parse(msgPacket);
-		console.log("ws发送给远程服务器的包" + JSON.stringify(msgPacket));
-		// 保存聊天记录,就算ws有异常也要先缓存到本地
-		var myId = msgPacket.senderId;
-		var msg = msgPacket.msg;
-		var friendId = msgPacket.receiverId;
-		var msgId = msgPacket.msgId;
+	sendToServer: function(packet) {
+		// 检查格式	
+		packet = checkJsonFormat(packet);
 
-		// 保存聊天记录
-		HistoryCache.saveMySingleMessage(myId, friendId, msg);
+		console.log("即将要被发送的包 " + JSON.stringify(packet));
+		let packetType = packet.type;
+		switch(packetType) {
+			case PacketType.NORMAL_MSG_PACKET:
+				{
+					sendNormalMsgToFriend(packet);
+					break;
+				}
+			default:
+				{
 
-		// 保存聊天信息快照
-		ChatSnapshot.saveChatSnapshot(new Snapshot(friendId, msg, true));
-
-		// 重新渲染快照
-		mui.fire(plus.webview.getWebviewById("chat-list.html"), "refeshSnapshot");
-		// 如果ws连接打开,则进行发送
-		if(Chat.socket != null &&
-			Chat.socket != undefined &&
-			Chat.socket.readyState == WebSocket.OPEN) {
-			// 通过ws发送包
-			Chat.socketSend(msgPacket);
-		} else {
-			// 如果ws连接关闭则试着重新打开ws
-			// todo 一旦ws连接发生异常,现在只是提醒信息发送失败,后期需要标记信息失败,然后让信息重发
-			console.log("发送时,ws连接关闭发生异常,可能是未连接服务器");
-
-			var chatWebView = plus.webview.getWebviewById("chatting-181118DZ3XBANZMW");
-			chatWebView.evalJS(`sendMessageError("${msgPacket}")`);
+				}
 		}
 	},
 	/**
@@ -148,7 +139,64 @@ function packetFormat(packet) {
 	}
 	return packet;
 }
+/**
+ * 需要包为json对象形式
+ * 检查是否为json对象
+ * @param {Object} packet
+ */
+function checkJsonFormat(packet) {
+	if(typeof packet == 'string') {
+		packet = JSON.parse(packet);
+	}
+	return packet;
+}
 
+/**
+ * 发送普通消息到服务器
+ * @param {Object} msgPacket
+ */
+function sendNormalMsgToFriend(msgPacket) {
+	console.log("发送给用户的包 " + JSON.stringify(msgPacket));
+
+	var msg = msgPacket.msg;
+	var friendId = msgPacket.receiverId;
+
+	// 保存聊天记录,就算ws有异常也要先缓存到本地
+	var msgItem = new MsgItem();
+	msgItem.msgContent = msgPacket.msg;
+	msgItem.friendUserId = msgPacket.receiverId;
+	msgItem.status = HistoryCache.MSG_STATUS.SUCCESS;
+	msgItem.owner = HistoryCache.OWNER_TYPE.ME;
+	msgItem.localMsgId = new Date().getTime();
+	console.log("查看刚生成的聊天记录缓存 " + JSON.stringify(msgItem))
+
+	// 保存聊天信息快照
+	ChatSnapshot.saveChatSnapshot(new Snapshot(friendId, msg, true));
+
+	// 重新渲染快照
+	mui.fire(plus.webview.getWebviewById("chat-list.html"), "refeshSnapshot");
+
+	// 如果ws连接打开,则进行发送
+	if(Chat.socket != null &&
+		Chat.socket != undefined &&
+		Chat.socket.readyState == WebSocket.OPEN) {
+		// 通过ws发送包
+		Chat.socketSend(msgPacket);
+		// 保存聊天记录
+		HistoryCache.saveMySingleMessage(msgItem);
+	} else {
+		// 如果ws连接关闭则试着重新打开ws
+		// todo 一旦ws连接发生异常,现在只是提醒信息发送失败,后期需要标记信息失败,然后让信息重发
+		console.log("发送时,ws连接关闭发生异常,可能是未连接服务器");
+		/*
+				var chatWebView = plus.webview.getWebviewById("chatting-" + friendId);
+				chatWebView.evalJS(`sendMessageError("${msgItem.localMsgId}")`);*/
+		// 保存聊天记录
+		HistoryCache.saveMySingleMessage(msgItem);
+		console.log(friendId, msgItem.localMsgId);
+		HistoryCache.markMsgError(friendId, msgItem.localMsgId);
+	}
+}
 /**
  * 签收信息
  */
@@ -191,7 +239,11 @@ function processNormalMessage(msgPacket) {
 	}
 
 	// 保存聊天记录到本地缓存
-	HistoryCache.saveFriendSingleMessage(myId, senderId, msg);
+	let msgItem = new MsgItem();
+	msgItem.msgContent = msg;
+	msgItem.friendUserId = senderId;
+
+	HistoryCache.saveFriendSingleMessage(msgItem);
 	// 保存聊天信息快照
 	ChatSnapshot.saveChatSnapshot(new Snapshot(senderId, msg, isRead));
 	console.log("接受到消息,重新渲染快照列表");
@@ -258,4 +310,29 @@ function keepAlive() {
 	setInterval(function() {
 		Chat.socketSend(heartBeatPacket);
 	}, app.heartBeatIdle);
+}
+
+function refurbishResource(msgPacket) {
+	var resourceCode = msgPacket.resourceCode;
+	switch(resourceCode) {
+		// 刷新好友列表
+		case ResourceCode.FRIEND_RESOURCE:
+			{
+				console.log("服务端喊我刷新好友列表啦");
+				var chatContact = plus.webview.getWebviewById("chat-contact.html")
+				mui.fire(chatContact, "refreshList");
+				break;
+			}
+		case ResourceCode.FRIEND_REQUEST_LIST:
+			{
+				console.log("服务端喊我刷新好友请求列表啦");
+				var friendRequest = plus.webview.getWebviewById("friend-request.html");
+				mui.fire(friendRequest, "fetchAndFresh");
+				break;
+			}
+		default:
+			{
+
+			}
+	}
 }

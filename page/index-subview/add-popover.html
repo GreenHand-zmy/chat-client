@@ -27,7 +27,7 @@
 		<div id="sheet-chat">
 			<ul class="mui-table-view">
 				<li class="mui-table-view-cell">
-					<a href="#">
+					<a id="link_group_chat" href="#">
 						<i class="mui-icon mui-pull-left iconfont icon-chat-group"></i> 发起群聊
 					</a>
 				</li>
@@ -47,6 +47,7 @@
 		</div>
 
 		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/app.js" ></script>
 		<script type="text/javascript">
 			mui.init();
 
@@ -67,6 +68,13 @@
 					plus.webview.currentWebview().hide();
 					plus.webview.open("scan-me.html", "scan-me.html");
 				})
+				
+				const link_group_chat = document.getElementById("link_group_chat");
+				link_group_chat.addEventListener("tap", (e) => {
+					plus.webview.currentWebview().hide();
+					app.showToast("作者太懒啦,还没有开发这个功能!");
+				})
+				
 			});
 		</script>
 	</body>

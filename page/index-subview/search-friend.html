@@ -25,6 +25,8 @@
 
 		<script src="../../js/mui.min.js"></script>
 		<script src="../../js/app.js"></script>
+		<script src="../../js/search-friend.js"></script>
+		<script src="../../js/utils/AjaxUtil.js"></script>
 		<script type="text/javascript">
 			mui.init();
 
@@ -40,66 +42,24 @@
 						app.showToast("昵称不能为空");
 						return;
 					}
-					
+
 					// 校验通过查找用户
-					search(username);
+					// 生成查询参数
+					const query = {
+						'username': username
+					};
+					search(query, (result) => {
+						// 页面跳转,并传递搜索结果
+						mui.openWindow({
+							url: "search-friend-result.html",
+							id: "search-friend-result.html",
+							extras: {
+								friendInfo: result
+							}
+						});
+					});
 				});
 			});
-			
-			/**
-			 * 通过账号查找用户
-			 * 
-			 * @param {Object} username
-			 */
-			function search(username) {
-				var url = app.serverUrl + "/user/search/";
-				app.globalAjax({
-					url: url,
-					type: 'get',
-					async: true,
-					data: {
-						'username': username,
-					}
-				}, function(data) {
-					var userInfo = data.data;
-
-					// 判断是否为好友,添加额外字段
-					isFriendRelation(userInfo);
-
-					// 页面跳转,并传递搜索结果
-					mui.openWindow({
-						url: "search-friend-result.html",
-						id: "search-friend-result.html",
-						extras: {
-							friendInfo: data.data
-						}
-					});
-				});
-			}
-			/**
-			 * 查看搜索出来的好友是否为好友,
-			 * 如果是好友添加added字段到搜索结果中
-			 * 
-			 * @param {Object} userInfo
-			 */
-			function isFriendRelation(userInfo) {
-
-				if(userInfo) {
-					var url = app.serverUrl + "/user/isFriendRelation";
-					app.globalAjax({
-						url: url,
-						type: 'get',
-						async: true,
-						data: {
-							'otherUserId': userInfo.id,
-						}
-					}, function(data) {
-						if(data) {
-							userInfo.added = data.data;
-						}
-					});
-				}
-			}
 
 			function valid(nickname) {
 				if(!app.isNotEmpty(nickname)) {

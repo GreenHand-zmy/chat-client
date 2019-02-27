@@ -16,7 +16,8 @@
 		            	<span class="mui-pull-right mui-icon mui-icon-arrowright" 
 		            		style="line-height: 42px;color: lightgray;margin-left: 3px;">
 		            	</span>
-		                <img id="face_img" class="mui-media-object mui-pull-right" src="">
+		                <img id="face_img" class="mui-media-object mui-pull-right" 
+		                	src="../../img/avatar/default_avatar.jpg" style="display: none;">
 		                <div class="mui-media-body" style="line-height: 42px;">
 		                    	头像
 		                </div>
@@ -110,7 +111,7 @@
 					app.clearStorage();
 					
 					// 跳转到登录界面
-					mui.openWindow("../../chat-loginOrRegister.html","chat-loginOrRegister.html");
+					mui.openWindow("../../login.html","login.html");
 				});
 			});
 			
@@ -127,12 +128,12 @@
 					nicknameOutput.innerHTML = nickname;
 					usernameOutput.innerHTML = username;
 					
+					var faceImageOutput = document.getElementById("face_img");
 					if(app.isNotEmpty(faceImage)){
-						var faceImageOutput = document.getElementById("face_img");
 						faceImageOutput.src = app.imgserverUrl + faceImage;
 					}
+					faceImageOutput.style.display = "block";
 				}
-
 			}
 		</script>
 	</body>

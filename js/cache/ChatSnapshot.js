@@ -12,7 +12,7 @@ window.ChatSnapshot = {
 		// 从本地缓存中获取聊天快照的list
 		var chatSnapshotListStr = plus.storage.getItem(ChatSnapshot.KEY);
 		var chatSnapshotList;
-		if(isNotEmpty(chatSnapshotListStr)) {
+		if(StringUtil.isNotEmpty(chatSnapshotListStr)) {
 			// 如果不为空,装换为json对象
 			chatSnapshotList = JSON.parse(chatSnapshotListStr);
 			//			console.log("保存快照前数组：" + JSON.stringify(chatSnapshotList));
@@ -42,7 +42,7 @@ window.ChatSnapshot = {
 		// 从本地缓存中获取聊天快照的list
 		var chatSnapshotListStr = plus.storage.getItem(ChatSnapshot.KEY);
 		var chatSnapshotList;
-		if(isNotEmpty(chatSnapshotListStr)) {
+		if(StringUtil.isNotEmpty(chatSnapshotListStr)) {
 			// 如果不为空,装换为json对象
 			chatSnapshotList = JSON.parse(chatSnapshotListStr);
 		} else {
@@ -57,14 +57,14 @@ window.ChatSnapshot = {
 	 */
 	snapshotReaded: function(snapshot) {
 		var chatSnapshotList = ChatSnapshot.getChatSnapshot();
-		//		console.log("改变前数组"+JSON.stringify(chatSnapshotList));
+				console.log("改变前数组"+JSON.stringify(chatSnapshotList));
 		chatSnapshotList.forEach((item) => {
 			if(item.friendId == snapshot.friendId) {
 				item.isRead = true;
 				return;
 			}
 		});
-		//		console.log("改变后数组"+JSON.stringify(chatSnapshotList));
+				console.log("改变后数组"+JSON.stringify(chatSnapshotList));
 		// 将快照列表保存到缓存中
 		plus.storage.setItem(ChatSnapshot.KEY, JSON.stringify(chatSnapshotList));
 	}

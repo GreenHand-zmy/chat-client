@@ -22,12 +22,20 @@
 
 	<body>
 		<script src="../../js/mui.min.js"></script>
-		<script src="../../js/app.js" type="text/javascript" charset="utf-8"></script>
-		<script src="../../js/friendList.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../../js/app.js"></script>
+		<script src="../../js/friendList.js"></script>
+		<script src="../../js/utils/StringUtil.js"></script>
+		<script src="../../js/utils/AjaxUtil.js" ></script>
+		<script src="../../js/cache/FriendCache.js"></script>
 		<script type="text/javascript">
 			mui.init();
 
 			mui.plusReady(function() {
+				
+				window.addEventListener("fetchAndFresh",function(){
+					loadFriendRequestList();
+				});
+				
 				loadFriendRequestList();
 			});
 
@@ -73,8 +81,13 @@
 
 				// 请求发送者昵称
 				const senderNickname = request.senderNickname;
+
 				// 请求发送者头像
-				const senderFaceImage = app.imgserverUrl + request.senderFaceImage;
+				const defaultAvatar = "../../img/avatar/default_avatar.jpg";
+				let senderFaceImage = app.imgserverUrl + request.senderFaceImage;
+				if(!StringUtil.isNotEmpty(request.senderFaceImage)) {
+					senderFaceImage = defaultAvatar;
+				}
 				// 请求发送者编号
 				const requestId = request.requestId;
 
@@ -84,7 +97,7 @@
 								<div class="mui-media-body mui-pull-left">
 									${senderNickname}
 									<p class="mui-ellipsis">
-										我是远传信息hr小远
+										你好呀
 									</p>
 								</div>
 								<div class="action-btn mui-pull-right">
@@ -117,6 +130,8 @@
 
 					// 重新加载请求列表
 					reload();
+					
+					mui.back();
 				})
 			}
 

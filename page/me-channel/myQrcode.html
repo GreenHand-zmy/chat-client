@@ -5,20 +5,21 @@
 		<meta charset="UTF-8">
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
-		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css"/>
-		<link rel="stylesheet" type="text/css" href="../../css/header.css"/>
-		<link rel="stylesheet" type="text/css" href="../../font_icon/iconfont.css"/>
+		<link rel="stylesheet" type="text/css" href="../../css/mui.min.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/header.css" />
+		<link rel="stylesheet" type="text/css" href="../../font_icon/iconfont.css" />
 		<style type="text/css">
-			.container{
+			.container {
 				position: absolute;
-			    top: 44px;
-			    right: 0;
-			    bottom: 0;
-			    left: 0;
-			    width: 100%;
+				top: 44px;
+				right: 0;
+				bottom: 0;
+				left: 0;
+				width: 100%;
 				background-color: #2E3132;
 			}
-			.info{
+			
+			.info {
 				position: relative;
 				overflow: hidden;
 				margin: 0 auto;
@@ -26,63 +27,70 @@
 				top: 10%;
 				background-color: #fff;
 			}
-			.qrcode-info{
+			
+			.qrcode-info {
 				width: 80%;
-			    height: 100%;
-			    margin: 0 auto;
-			    padding-top: 10%;
-    			padding-bottom: 5%;
+				height: 100%;
+				margin: 0 auto;
+				padding-top: 10%;
+				padding-bottom: 5%;
 			}
-			.face-nickname{
+			
+			.face-nickname {
 				overflow: hidden;
 			}
-			.qrcode-image{
+			
+			.qrcode-image {
 				margin-top: 5%;
 				overflow: hidden;
 			}
-			.qrcode-image img{
+			
+			.qrcode-image img {
 				width: 100%;
-			    height: 100%;
+				height: 100%;
 			}
-			.face{
-
+			
+			.face {
 				float: left;
 			}
-			.face img{
+			
+			.face img {
 				border-radius: 8%;
 				border: 1px solid black;
 			}
-			.nickname{
+			
+			.nickname {
 				float: left;
 				margin-top: 10px;
 				margin-left: 10px;
 			}
-			.extra-info{
+			
+			.extra-info {
 				padding-top: 2%;
 				text-align: center;
 			}
-			.extra-info span{
+			
+			.extra-info span {
 				color: #999999;
 				font-size: 14px;
 			}
-			
 		</style>
 	</head>
 
 	<body>
 		<header class="mui-bar mui-bar-nav bar">
-		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option">我的二维码</a>
-		    <a id="link_download" class="mui-icon mui-icon-right-nav mui-pull-right option">
-		    	<span class="iconfont icon-download bar-btn"></span>
-		    </a>
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left option">我的二维码</a>
+			<a id="link_download" class="mui-icon mui-icon-right-nav mui-pull-right option">
+				<span class="iconfont icon-download bar-btn"></span>
+			</a>
 		</header>
-		
+
 		<div class="container">
 			<div class="info">
 				<div class="qrcode-info">
 					<div class="face-nickname">
 						<div class="face">
-							<img id="face-img" src="" />
+							<img id="face-img" src="../../img/avatar/default_avatar.jpg" style="width: 80px;height: 80px;display: none;" />
 						</div>
 						<div class="nickname">
 							<span id="nickname-text"></span>
@@ -99,59 +107,90 @@
 				</div>
 			</div>
 		</div>
-		
+
 		<script src="../../js/mui.min.js"></script>
 		<script src="../../js/app.js"></script>
+		<script src="../../js/cache/UserInfoCache.js"></script>
+		<script src="../../js/utils/AjaxUtil.js"></script>
 		<script type="text/javascript">
-			
 			mui.init();
-			
-			mui.plusReady(function(){
+
+			mui.plusReady(function() {
 				var userInfo = app.getUserGlobalInfo();
 				
-				if(app.isNotEmpty(userInfo.faceImage)){
-					var faceImg = document.getElementById("face-img");
+				// 设置头像
+				var faceImg = document.getElementById("face-img");
+				if(app.isNotEmpty(userInfo.faceImage)) {
 					faceImg.src = app.imgserverUrl + userInfo.faceImage;
 				}
-				if(app.isNotEmpty(userInfo.nickname)){
+				faceImg.style.display = "block";
+				
+				// 设置昵称
+				if(app.isNotEmpty(userInfo.nickname)) {
 					var nicknameText = document.getElementById("nickname-text");
 					nicknameText.innerHTML = userInfo.nickname;
 				}
-				if(app.isNotEmpty(userInfo.qrcode)){
+				
+				// 设置二维码
+				if(app.isNotEmpty(userInfo.qrcode)) {
 					var qrcodeImg = document.getElementById("qrcode-img");
 					qrcodeImg.src = app.imgserverUrl + userInfo.qrcode;
+				} else {
+					// 二维码不存在,因为服务端生成二维码是异步的操作,所以当二维码是空的情况再去请求服务端拿取最新的信息
+					fillEmptyFiled(function(res) {
+						var qrcodeImg = document.getElementById("qrcode-img");
+
+						if(!app.isNotEmpty(res.data.qrcode)) {
+							// 仍然为空,设置为静态图片,并报错
+							app.showToast("获取二维码失败,请联系管理员");
+							// TODO 
+							qrcodeImg.src = "../../img/good.png";
+						} else {
+							qrcodeImg.src = app.imgserverUrl + res.data.qrcode;
+						}
+						UserInfoCache.save(res.data);
+					});
 				}
-				
+
 				// 下载照片绑定事件
 				var link_download = document.getElementById("link_download");
-				link_download.addEventListener("tap", function(e){
+				link_download.addEventListener("tap", function(e) {
 					plus.nativeUI.showWaiting("下载中...");
-					
+
 					var userInfo = app.getUserGlobalInfo();
-					var qrcode = userInfo.qrcode;	
-					
+					var qrcode = userInfo.qrcode;
+
 					// 新建下载任务
 					var downloadTask = plus.downloader.createDownload(
-						app.imgserverUrl + qrcode,
-						{},
-						function(downloadFile, status){
+						app.imgserverUrl + qrcode, {},
+						function(downloadFile, status) {
 							plus.nativeUI.closeWaiting();
-							
-							if(status == 200){
+
+							if(status == 200) {
 								var tempFile = downloadFile.filename;
 								// 通过相册api保存照片
-								plus.gallery.save(tempFile,function(){
+								plus.gallery.save(tempFile, function() {
 									app.showToast("下载成功");
 								})
-							} else{
+							} else {
 								app.showToast("下载失败");
 							}
 						}
 					);
 					downloadTask.start();
-					
+
 				});
-      		});
+			});
+
+			function fillEmptyFiled(callback) {
+				AjaxUtil.ajaxWithToken({
+					url: "/user/myself",
+					type: "get",
+					async: false,
+				}, function(res) {
+					callback(res);
+				})
+			}
 		</script>
 	</body>
 

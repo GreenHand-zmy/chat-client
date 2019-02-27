@@ -5,21 +5,19 @@
  * 参数对象内容{id:'',username:''}
  */
 function search(params, callback) {
-	var url = app.serverUrl + "/user/search/";
-
-	app.globalAjax({
+	var url = "/user/search/";
+	AjaxUtil.ajaxWithToken({
 		url: url,
 		type: 'get',
-		async: false,
-		data: params,
+		async: true,
+		data: params
 	}, function(data) {
 		var userInfo = data.data;
+		console.log("好友搜索结果：" + JSON.stringify(data))
 		// 判断是否为好友,添加额外字段
 		isFriendRelation(userInfo);
 
-		if(callback) {
-			callback(userInfo);
-		}
+		callback(userInfo);
 	});
 }
 /**
@@ -29,17 +27,17 @@ function search(params, callback) {
  * @param {Object} userInfo
  */
 function isFriendRelation(userInfo) {
-
 	if(userInfo) {
-		var url = app.serverUrl + "/user/isFriendRelation";
-		app.globalAjax({
+		var url = "/user/isFriendRelation";
+
+		AjaxUtil.ajaxWithToken({
 			url: url,
 			type: 'get',
 			async: false,
 			data: {
 				'otherUserId': userInfo.id,
 			}
-		}, function(data) {
+		}, (data) => {
 			if(data) {
 				userInfo.added = data.data;
 			}

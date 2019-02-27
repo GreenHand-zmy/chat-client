@@ -38,7 +38,7 @@
 
 		<div class="outer-box mui-fullscreen">
 			<div class="holdcenter">
-				<img id="myface_img" src="" />
+				<img id="myface_img" src="../../img/avatar/default_avatar.jpg" style="display: none;"/>
 			</div>
 		</div>
 
@@ -62,6 +62,8 @@
 
 		<script src="../../js/mui.min.js"></script>
 		<script src="../../js/app.js"></script>
+		<script src="../../js/utils/AjaxUtil.js" ></script>
+		<script src="../../js/cache/UserInfoCache.js" ></script>
 		<script type="text/javascript">
 			mui.init();
 
@@ -130,6 +132,7 @@
 					if(app.isNotEmpty(faceImage)) {
 						faceImageOutput.src = app.imgserverUrl + faceImage;
 					}
+					faceImageOutput.style.display= "block";
 					// 获取手机端可见屏幕宽度
 					var imgWidth = document.body.clientWidth;
 

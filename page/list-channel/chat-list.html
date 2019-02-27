@@ -88,22 +88,26 @@
 				console.log("从缓存中读取聊天快照,渲染列表");
 				var snapshotList = ChatSnapshot.getChatSnapshot();
 				var finalHtml = "";
-				snapshotList.forEach((snapshot) => {
-					// TODO 查询性能优化看后期是否有优化的必要
-					//					var startTime = new Date().getTime();
 
-					var friendInfo = FriendCache.getFriend(snapshot.friendId);
-
-					//					var endTime = new Date().getTime();
-					//					console.log("查询好友信息耗时：" + (endTime - startTime));
-
-					var faceImage = app.imgserverUrl + friendInfo.faceImage;
-					var isRead = snapshot.isRead;
-					var redPointClass = '';
-					if(!isRead) {
-						redPointClass = 'red-point';
-					}
-					finalHtml += `<li friendUserId="${friendInfo.id}" class="chat-with-friend mui-table-view-cell mui-media">
+				if(snapshotList.length === 0) {
+					finalHtml = `<p class="mui-ellipsis" style="text-align: center;font-size:20px;padding:10px">
+					列表空空如也,快去添加几个好友聊天吧!</p>`;
+				} else {
+					snapshotList.forEach((snapshot) => {
+						var friendInfo = FriendCache.getFriend(snapshot.friendId);
+						var faceImage = app.imgserverUrl + friendInfo.faceImage;
+						
+						const defaultAvatar = "../../img/avatar/default_avatar.jpg"
+						if(!StringUtil.isNotEmpty(friendInfo.faceImage)) {
+							faceImage = defaultAvatar;
+						}
+						
+						var isRead = snapshot.isRead;
+						var redPointClass = '';
+						if(!isRead) {
+							redPointClass = 'red-point';
+						}
+						finalHtml += `<li friendUserId="${friendInfo.id}" class="chat-with-friend mui-table-view-cell mui-media">
 									<div class="mui-slider-right mui-disabled">
 										<a class="mui-btn mui-btn-red">删除</a>
 									</div>
@@ -113,7 +117,8 @@
 										<p class="mui-ellipsis">${snapshot.msg}</p>
 									</div>
 								</li>`
-				});
+					});
+				}
 
 				// 将快照列表进行渲染
 				document.getElementById("chat-snapshot-list").innerHTML = finalHtml;
