@@ -18,3 +18,6 @@
 	imgserverUrl: "http://本地地址/或服务器地址/fdfs/",
 ```
 3. 关于如何真机运行调试,请参考Hbuild的官网文档。
+
+#### 尝尝鲜
+[app下载地址](https://github.com/GreenHand-zmy/chat-client/releases/tag/1.0)
